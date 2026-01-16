@@ -1,0 +1,23 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/records/index",
+    "pages/record-detail/index",
+    "pages/random/index",
+    "pages/index/index",
+    "pages/auth/openid/index",
+    "pages/database/sales/index",
+    "pages/storage/upload/index",
+    "pages/example/index"
+  ],
+  "window": {
+    "backgroundColor": "#FFF8E7",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FFD93D",
+    "navigationBarTitleText": "幸福时刻",
+    "navigationBarTextStyle": "black"
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

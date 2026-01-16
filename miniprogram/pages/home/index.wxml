@@ -1,0 +1,76 @@
+<view class="container">
+  <!-- 顶部日期 -->
+  <view class="header">
+    <text class="date">{{currentDate}}</text>
+    <text class="greeting">今天记录了吗？</text>
+  </view>
+
+  <!-- 记录表单 -->
+  <view class="form">
+    <!-- 文字输入 -->
+    <view class="input-group">
+      <textarea
+        class="content-input"
+        placeholder="记录一个开心的瞬间..."
+        placeholder-class="placeholder"
+        value="{{content}}"
+        bindinput="onContentInput"
+        auto-height
+        maxlength="500"
+        show-confirm-bar="{{false}}"
+      />
+    </view>
+
+    <!-- 图片上传 -->
+    <view class="image-group" wx:if="{{!imageUrl}}">
+      <button
+        class="upload-btn"
+        bindtap="onChooseImage"
+        type="default"
+      >
+        <text class="upload-icon">📷</text>
+        <text class="upload-text">添加照片</text>
+      </button>
+    </view>
+
+    <!-- 已上传图片预览 -->
+    <view class="image-preview" wx:if="{{imageUrl}}">
+      <image
+        class="preview-image"
+        src="{{imageUrl}}"
+        mode="aspectFill"
+      />
+      <view class="image-remove" bindtap="onRemoveImage">
+        <text>×</text>
+      </view>
+    </view>
+
+    <!-- 位置信息 -->
+    <view class="location-group" wx:if="{{location}}">
+      <text class="location-icon">📍</text>
+      <text class="location-text">{{location.name || '未知位置'}}</text>
+    </view>
+
+    <!-- 提交按钮 -->
+    <button
+      class="submit-btn {{content ? 'active' : ''}}"
+      bindtap="onSubmit"
+      disabled="{{!content || submitting}}"
+      loading="{{submitting}}"
+    >
+      {{submitting ? '记录中...' : '保存幸福'}}
+    </button>
+  </view>
+
+  <!-- 底部导航 -->
+  <view class="footer">
+    <view class="footer-item" bindtap="goToRecords">
+      <text class="footer-icon">📝</text>
+      <text class="footer-text">查看记录</text>
+    </view>
+    <view class="footer-item" bindtap="goToRandom">
+      <text class="footer-icon">🎲</text>
+      <text class="footer-text">随机回顾</text>
+    </view>
+  </view>
+</view>

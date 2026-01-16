@@ -1,0 +1,41 @@
+<view class="container" wx:if="{{record}}">
+  <!-- 记录卡片 -->
+  <view class="record-card">
+    <view class="card-header">
+      <text class="record-time">{{record.created_at}}</text>
+      <text class="record-location" wx:if="{{record.location && record.location.name}}">
+        📍 {{record.location.name}}
+      </text>
+    </view>
+
+    <view class="card-content">
+      <text class="content-text">{{record.content}}</text>
+    </view>
+
+    <view class="card-image" wx:if="{{record.image_url}}">
+      <image 
+        src="{{record.image_url}}" 
+        mode="aspectFill" 
+        class="record-img"
+        bindtap="onPreviewImage"
+      />
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="actions">
+    <button class="action-btn share-btn" bindtap="onShare" type="default">
+      <text class="btn-icon">📤</text>
+      <text class="btn-text">生成海报</text>
+    </button>
+    <button class="action-btn delete-btn" bindtap="onDelete" type="default">
+      <text class="btn-icon">🗑️</text>
+      <text class="btn-text">删除</text>
+    </button>
+  </view>
+</view>
+
+<!-- 加载状态 -->
+<view class="loading" wx:if="{{!record && loading}}">
+  <text>加载中...</text>
+</view>

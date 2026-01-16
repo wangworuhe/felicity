@@ -1,0 +1,53 @@
+<view class="container">
+  <!-- 空状态 -->
+  <view class="empty" wx:if="{{!record && !loading}}">
+    <text class="empty-icon">📦</text>
+    <text class="empty-text">还没有记录哦</text>
+    <button class="empty-btn" bindtap="goToHome" type="default">
+      去记录第一条幸福
+    </button>
+  </view>
+
+  <!-- 随机记录卡片 -->
+  <view class="random-card" wx:if="{{record}}">
+    <view class="card-header">
+      <text class="card-badge">✨ 随机回忆</text>
+      <text class="card-time">{{record.created_at}}</text>
+    </view>
+
+    <view class="card-content">
+      <text class="content-text">{{record.content}}</text>
+    </view>
+
+    <view class="card-image" wx:if="{{record.image_url}}">
+      <image 
+        src="{{record.image_url}}" 
+        mode="aspectFill" 
+        class="record-img"
+        bindtap="onPreviewImage"
+      />
+    </view>
+
+    <view class="card-location" wx:if="{{record.location && record.location.name}}">
+      <text class="location-icon">📍</text>
+      <text class="location-text">{{record.location.name}}</text>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="actions" wx:if="{{record}}">
+    <button class="action-btn refresh-btn" bindtap="onRefresh" type="default">
+      <text class="btn-icon">🎲</text>
+      <text class="btn-text">再随机一条</text>
+    </button>
+    <button class="action-btn view-btn" bindtap="onViewDetail" type="default">
+      <text class="btn-icon">👁️</text>
+      <text class="btn-text">查看详情</text>
+    </button>
+  </view>
+</view>
+
+<!-- 加载状态 -->
+<view class="loading" wx:if="{{loading}}">
+  <text>加载中...</text>
+</view>

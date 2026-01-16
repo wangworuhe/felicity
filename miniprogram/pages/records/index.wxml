@@ -1,0 +1,47 @@
+<view class="container">
+  <!-- 空状态 -->
+  <view class="empty" wx:if="{{records.length === 0 && !loading}}">
+    <text class="empty-icon">🌟</text>
+    <text class="empty-text">还没有记录哦，去记录第一条幸福吧！</text>
+  </view>
+
+  <!-- 记录列表 -->
+  <view class="list" wx:if="{{records.length > 0}}">
+    <view 
+      class="record-card" 
+      wx:for="{{records}}" 
+      wx:key="_id"
+      bindtap="onCardTap"
+      data-id="{{item._id}}"
+    >
+      <view class="card-header">
+        <text class="card-time">{{item.created_at}}</text>
+        <text class="card-location" wx:if="{{item.location && item.location.name}}">
+          {{item.location.name}}
+        </text>
+      </view>
+      
+      <view class="card-content">
+        <text class="content-text">{{item.content}}</text>
+      </view>
+      
+      <view class="card-image" wx:if="{{item.image_url}}">
+        <image 
+          src="{{item.image_url}}" 
+          mode="aspectFill" 
+          class="card-img"
+        />
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载更多 -->
+  <view class="load-more" wx:if="{{hasMore && records.length > 0}}">
+    <text>{{loading ? '加载中...' : '加载更多'}}</text>
+  </view>
+
+  <!-- 底部提示 -->
+  <view class="footer-tip" wx:if="{{!hasMore && records.length > 0}}">
+    <text>没有更多记录了</text>
+  </view>
+</view>

@@ -1,0 +1,57 @@
+<!--pages/database/sales/index.wxml-->
+<view class="container">
+  <view class="header">
+    <button type="primary" size="mini" bindtap="getRecord" wx:if="{{!haveGetRecord}}">
+      获取数据
+    </button>
+    <view class="actions" wx:else>
+      <button type="default" size="mini" bindtap="refreshRecord">刷新</button>
+      <button type="default" size="mini" bindtap="clearRecord">清除</button>
+      <button type="primary" size="mini" bindtap="insertRecord">新增</button>
+      <button type="primary" size="mini" bindtap="updateRecord">保存</button>
+    </view>
+  </view>
+
+  <view class="record-list" wx:if="{{haveGetRecord && record.length > 0}}">
+    <view class="record-item" wx:for="{{record}}" wx:key="_id">
+      <view class="record-info">
+        <text class="record-region">{{item.region}}</text>
+        <text class="record-city">{{item.city}}</text>
+      </view>
+      <view class="record-sales">
+        <text>销售额：</text>
+        <input type="number" value="{{item.sales}}" data-index="{{index}}" bindinput="bindInput" />
+      </view>
+      <view class="record-actions">
+        <button type="warn" size="mini" data-id="{{item._id}}" bindtap="deleteRecord">删除</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:if="{{haveGetRecord && record.length === 0}}">
+    <text>暂无数据</text>
+  </view>
+</view>
+
+<!-- 插入弹窗 -->
+<modal
+  title="新增销售记录"
+  show="{{showInsertModal}}"
+  bindcancel="onInsertCancel"
+  bindconfirm="onInsertConfirm"
+>
+  <view class="modal-content">
+    <view class="form-item">
+      <text class="form-label">地区</text>
+      <input type="text" value="{{insertRegion}}" bindinput="onInsertRegionInput" placeholder="请输入地区" />
+    </view>
+    <view class="form-item">
+      <text class="form-label">城市</text>
+      <input type="text" value="{{insertCity}}" bindinput="onInsertCityInput" placeholder="请输入城市" />
+    </view>
+    <view class="form-item">
+      <text class="form-label">销售额</text>
+      <input type="number" value="{{insertSales}}" bindinput="onInsertSalesInput" placeholder="请输入销售额" />
+    </view>
+  </view>
+</modal>

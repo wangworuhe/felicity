@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "我的记录",
+  "navigationBarBackgroundColor": "#FFD93D",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#FFF8E7",
+  "enablePullDownRefresh": true
+}
