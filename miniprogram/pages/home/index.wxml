@@ -7,30 +7,64 @@
 
   <!-- 记录表单 -->
   <view class="form">
-    <!-- 文字输入 -->
-    <view class="input-group">
-      <textarea
-        class="content-input"
-        placeholder="记录一个开心的瞬间..."
-        placeholder-class="placeholder"
-        value="{{content}}"
-        bindinput="onContentInput"
-        auto-height
-        maxlength="500"
-        show-confirm-bar="{{false}}"
-      />
+    <!-- 文字输入 + 工具栏 -->
+    <view class="input-wrapper">
+      <view class="input-box">
+        <textarea
+          class="content-input"
+          placeholder="记录一个开心的瞬间..."
+          placeholder-class="placeholder"
+          value="{{content}}"
+          bindinput="onContentInput"
+          maxlength="500"
+          show-confirm-bar="{{false}}"
+          fixed="{{true}}"
+        />
+      </view>
+
+      <!-- 底部工具栏 -->
+      <view class="input-toolbar">
+        <view class="toolbar-left">
+          <!-- 图片按钮 -->
+          <view
+            class="tool-btn image-btn {{imageUrl ? 'has-image' : ''}}"
+            bindtap="onChooseImage"
+          >
+            <text class="tool-icon">📷</text>
+          </view>
+
+          <!-- 语音按钮 -->
+          <view
+            class="tool-btn voice-btn {{isRecording ? 'recording' : ''}}"
+            bindtouchstart="onVoiceStart"
+            bindtouchend="onVoiceEnd"
+            bindtouchcancel="onVoiceCancel"
+          >
+            <text class="tool-icon">{{isRecording ? '🎤' : '🎙️'}}</text>
+          </view>
+        </view>
+
+        <!-- 字数计数 -->
+        <view class="char-count">
+          <text>{{content.length}}/500</text>
+        </view>
+      </view>
     </view>
 
-    <!-- 图片上传 -->
-    <view class="image-group" wx:if="{{!imageUrl}}">
-      <button
-        class="upload-btn"
-        bindtap="onChooseImage"
-        type="default"
-      >
-        <text class="upload-icon">📷</text>
-        <text class="upload-text">添加照片</text>
-      </button>
+    <!-- 录音提示 -->
+    <view class="recording-tip" wx:if="{{isRecording}}">
+      <text>正在录音 {{recordingTime}}s，松开结束</text>
+    </view>
+
+    <!-- 已上传录音预览 -->
+    <view class="voice-preview" wx:if="{{voiceUrl}}">
+      <view class="voice-info">
+        <text class="voice-icon">🎤</text>
+        <text class="voice-text">已录制语音</text>
+      </view>
+      <view class="voice-remove" bindtap="onRemoveVoice">
+        <text>×</text>
+      </view>
     </view>
 
     <!-- 已上传图片预览 -->
@@ -53,9 +87,9 @@
 
     <!-- 提交按钮 -->
     <button
-      class="submit-btn {{content ? 'active' : ''}}"
+      class="submit-btn {{content || voiceUrl ? 'active' : ''}}"
       bindtap="onSubmit"
-      disabled="{{!content || submitting}}"
+      disabled="{{!content && !voiceUrl || submitting}}"
       loading="{{submitting}}"
     >
       {{submitting ? '记录中...' : '保存幸福'}}

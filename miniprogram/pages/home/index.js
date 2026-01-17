@@ -8,8 +8,12 @@ Page({
     currentDate: '',
     content: '',
     imageUrl: '',
+    voiceUrl: '',
     location: null,
-    submitting: false
+    submitting: false,
+    isRecording: false,
+    recordingTime: 0,
+    recordingTimer: null
   },
 
   onLoad() {
@@ -24,9 +28,99 @@ Page({
     const day = String(date.getDate()).padStart(2, '0');
     const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
     const weekDay = weekDays[date.getDay()];
-    
+
     this.setData({
       currentDate: `${year}年${month}月${day}日 ${weekDay}`
+    });
+  },
+
+  onRemoveImage() {
+    this.setData({
+      imageUrl: ''
+    });
+  },
+
+  onVoiceStart() {
+    const recorderManager = wx.getRecorderManager();
+
+    wx.getSetting({
+      success: (res) => {
+        const authSetting = res.authSetting;
+        if (authSetting['scope.record'] === false) {
+          wx.showModal({
+            title: '需要麦克风权限',
+            content: '请允许使用麦克风以启用录音功能',
+            showCancel: false,
+            confirmText: '去设置',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                wx.openSetting();
+              }
+            }
+          });
+        } else {
+          this.setData({ isRecording: true, recordingTime: 0 });
+
+          const timer = setInterval(() => {
+            this.setData({
+              recordingTime: this.data.recordingTime + 1
+            });
+          }, 1000);
+          this.setData({ recordingTimer: timer });
+
+          recorderManager.start({
+            duration: 60000,
+            format: 'mp3'
+          });
+        }
+      }
+    });
+  },
+
+  onVoiceEnd() {
+    const recorderManager = wx.getRecorderManager();
+    recorderManager.stop();
+
+    recorderManager.onStop((res) => {
+      clearInterval(this.data.recordingTimer);
+      this.setData({ isRecording: false, recordingTime: 0, recordingTimer: null });
+      this.uploadVoice(res.tempFilePath);
+    });
+  },
+
+  onVoiceCancel() {
+    const recorderManager = wx.getRecorderManager();
+    recorderManager.stop();
+    clearInterval(this.data.recordingTimer);
+    this.setData({ isRecording: false, recordingTime: 0, recordingTimer: null });
+  },
+
+  async uploadVoice(filePath) {
+    showLoading(TOAST_MESSAGES.IMAGE_UPLOADING);
+
+    try {
+      const cloudPath = `voice/${Date.now()}.mp3`;
+      const result = await wx.cloud.uploadFile({
+        cloudPath,
+        filePath
+      });
+
+      this.setData({
+        voiceUrl: result.fileID
+      });
+
+      showToast('录音上传成功');
+    } catch (error) {
+      console.error('上传录音失败:', error);
+      showToast('录音上传失败');
+    } finally {
+      hideLoading();
+    }
+  },
+
+  onRemoveVoice() {
+    this.setData({
+      voiceUrl: ''
     });
   },
 
@@ -100,10 +194,59 @@ Page({
     });
   },
 
+  onVoiceStart() {
+    const { voiceManager } = this.data;
+    if (!voiceManager) {
+      wx.showToast({
+        title: '语音功能初始化中',
+        icon: 'none'
+      });
+      return;
+    }
+
+    wx.getSetting({
+      success: (res) => {
+        const authSetting = res.authSetting;
+        if (authSetting['scope.record'] === false) {
+          wx.showModal({
+            title: '需要麦克风权限',
+            content: '请允许使用麦克风以启用语音输入功能',
+            showCancel: false,
+            confirmText: '去设置',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                wx.openSetting();
+              }
+            }
+          });
+        } else {
+          voiceManager.start({
+            lang: 'zh_CN'
+          });
+        }
+      }
+    });
+  },
+
+  onVoiceEnd() {
+    const { voiceManager } = this.data;
+    if (voiceManager) {
+      voiceManager.stop();
+    }
+  },
+
+  onVoiceCancel() {
+    const { voiceManager } = this.data;
+    if (voiceManager) {
+      voiceManager.stop();
+    }
+    this.setData({ isRecording: false });
+  },
+
   async onSubmit() {
-    const { content, imageUrl, location } = this.data;
-    
-    if (!content) {
+    const { content, imageUrl, voiceUrl, location } = this.data;
+
+    if (!content && !voiceUrl) {
       showToast(TOAST_MESSAGES.CONTENT_REQUIRED);
       return;
     }
@@ -115,15 +258,17 @@ Page({
       await createHappinessRecord({
         content,
         image_url: imageUrl,
+        voice_url: voiceUrl,
         location
       });
-      
+
       this.setData({
         content: '',
         imageUrl: '',
+        voiceUrl: '',
         submitting: false
       });
-      
+
       hideLoading();
       showSuccess(TOAST_MESSAGES.RECORD_CREATE_SUCCESS);
       this.getLocation();
@@ -145,5 +290,11 @@ Page({
     wx.navigateTo({
       url: '/pages/random/index'
     });
+  },
+
+  onUnload() {
+    clearInterval(this.data.recordingTimer);
+    const recorderManager = wx.getRecorderManager();
+    recorderManager.stop();
   }
 });
