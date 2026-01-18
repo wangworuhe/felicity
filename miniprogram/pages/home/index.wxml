@@ -8,22 +8,27 @@
   <!-- 记录表单 -->
   <view class="form">
     <!-- 文字输入 + 工具栏 -->
-    <view class="input-wrapper">
-      <view class="input-box">
+    <view class="input-wrapper {{isInputFocused ? 'focused' : ''}}">
+      <view class="input-box {{isInputFocused ? 'focused' : ''}}">
         <textarea
           class="content-input"
           placeholder="记录一个开心的瞬间..."
           placeholder-class="placeholder"
           value="{{content}}"
           bindinput="onContentInput"
+          bindfocus="onInputFocus"
+          bindblur="onInputBlur"
           maxlength="500"
           show-confirm-bar="{{false}}"
           fixed="{{true}}"
         />
+        <view class="char-count">
+          <text class="{{content.length > 400 ? 'warning' : ''}} {{content.length >= 500 ? 'error' : ''}}">{{content.length}}/500</text>
+        </view>
       </view>
 
       <!-- 底部工具栏 -->
-      <view class="input-toolbar">
+      <view class="input-toolbar {{isInputFocused ? 'focused' : ''}}">
         <view class="toolbar-left">
           <!-- 图片按钮 -->
           <view
@@ -42,11 +47,6 @@
           >
             <text class="tool-icon">{{isRecording ? '🎤' : '🎙️'}}</text>
           </view>
-        </view>
-
-        <!-- 字数计数 -->
-        <view class="char-count">
-          <text>{{content.length}}/500</text>
         </view>
       </view>
     </view>

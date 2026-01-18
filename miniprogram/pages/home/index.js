@@ -13,7 +13,8 @@ Page({
     submitting: false,
     isRecording: false,
     recordingTime: 0,
-    recordingTimer: null
+    recordingTimer: null,
+    isInputFocused: false
   },
 
   onLoad() {
@@ -151,6 +152,14 @@ Page({
     this.setData({
       content: e.detail.value
     });
+  },
+
+  onInputFocus() {
+    this.setData({ isInputFocused: true });
+  },
+
+  onInputBlur() {
+    this.setData({ isInputFocused: false });
   },
 
   onChooseImage() {
