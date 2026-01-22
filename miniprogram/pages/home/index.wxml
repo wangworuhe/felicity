@@ -1,12 +1,15 @@
 <view class="container">
   <!-- 顶部日期 -->
   <view class="header">
+
+
     <text class="date">{{currentDate}}</text>
     <text class="greeting">今天记录了吗？</text>
   </view>
 
   <!-- 记录表单 -->
-  <view class="form">
+  <view class="form" style="min-height: {{formMinHeightPx}}px;">
+
     <!-- 文字输入 + 工具栏 -->
     <view class="input-wrapper {{isInputFocused ? 'focused' : ''}}">
       <view class="input-box {{isInputFocused ? 'focused' : ''}}">
@@ -35,7 +38,8 @@
             class="tool-btn image-btn {{imageUrl ? 'has-image' : ''}}"
             bindtap="onChooseImage"
           >
-            <text class="tool-icon">📷</text>
+            <view class="tool-icon-dot"></view>
+            <text class="tool-label">图片</text>
           </view>
 
           <!-- 语音按钮 -->
@@ -45,8 +49,10 @@
             bindtouchend="onVoiceEnd"
             bindtouchcancel="onVoiceCancel"
           >
-            <text class="tool-icon">{{isRecording ? '🎤' : '🎙️'}}</text>
+            <view class="tool-icon-dot"></view>
+            <text class="tool-label">{{isRecording ? '录音中' : '语音'}}</text>
           </view>
+
         </view>
       </view>
     </view>
@@ -96,15 +102,109 @@
     </button>
   </view>
 
-  <!-- 底部导航 -->
-  <view class="footer">
-    <view class="footer-item" bindtap="goToRecords">
-      <text class="footer-icon">📝</text>
-      <text class="footer-text">查看记录</text>
+  <!-- 历史记录 -->
+  <view class="records-section">
+    <view class="section-header">
+      <text class="section-title">历史记录</text>
+      <text class="section-subtitle">下拉查看更多</text>
     </view>
-    <view class="footer-item" bindtap="goToRandom">
-      <text class="footer-icon">🎲</text>
-      <text class="footer-text">随机回顾</text>
+
+    <view class="empty" wx:if="{{records.length === 0 && !loadingRecords}}">
+      <text class="empty-text">还没有记录哦</text>
+    </view>
+
+    <view class="list" wx:if="{{records.length > 0}}">
+      <view
+        class="record-card"
+        wx:for="{{records}}"
+        wx:key="_id"
+        bindtap="onCardTap"
+        data-id="{{item._id}}"
+      >
+        <view class="card-header">
+          <text class="card-time">{{item.created_at}}</text>
+          <text class="card-location" wx:if="{{item.location && item.location.name}}">
+            {{item.location.name}}
+          </text>
+        </view>
+
+        <view class="card-content">
+          <text class="content-text">{{item.content}}</text>
+        </view>
+
+        <view class="card-image" wx:if="{{item.image_url}}">
+          <image
+            src="{{item.image_url}}"
+            mode="aspectFill"
+            class="card-img"
+          />
+        </view>
+      </view>
+    </view>
+
+    <view class="load-more" wx:if="{{hasMore && records.length > 0}}">
+      <text>{{loadingRecords ? '加载中...' : '上拉加载更多'}}</text>
+    </view>
+
+    <view class="footer-tip" wx:if="{{!hasMore && records.length > 0}}">
+      <text>没有更多记录了</text>
+    </view>
+  </view>
+
+  <!-- 随机回顾悬浮按钮 -->
+  <view class="random-fab" bindtap="openRandomModal">
+    <text class="random-fab-text">随机回顾</text>
+  </view>
+
+  <!-- 随机回顾弹窗 -->
+  <view class="modal-mask" wx:if="{{showRandomModal}}" bindtap="closeRandomModal"></view>
+  <view class="random-modal" wx:if="{{showRandomModal}}">
+    <view class="random-modal-content" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">随机回顾</text>
+        <text class="modal-close" bindtap="closeRandomModal">×</text>
+      </view>
+
+      <view class="modal-body" wx:if="{{randomLoading}}">
+        <text class="modal-loading">加载中...</text>
+      </view>
+
+      <view class="modal-body" wx:elif="{{randomRecord}}">
+        <view class="random-card">
+          <view class="card-header">
+            <text class="card-badge">随机回忆</text>
+            <text class="card-time">{{randomRecord.created_at}}</text>
+          </view>
+
+          <view class="card-content">
+            <text class="content-text">{{randomRecord.content}}</text>
+          </view>
+
+          <view class="card-image" wx:if="{{randomRecord.image_url}}">
+            <image
+              src="{{randomRecord.image_url}}"
+              mode="aspectFill"
+              class="record-img"
+              bindtap="onPreviewRandomImage"
+            />
+          </view>
+
+          <view class="card-location" wx:if="{{randomRecord.location && randomRecord.location.name}}">
+            <text class="location-label">位置</text>
+            <text class="location-text">{{randomRecord.location.name}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="modal-body" wx:else>
+        <text class="modal-empty">还没有记录哦</text>
+      </view>
+
+      <view class="modal-actions" wx:if="{{randomRecord}}">
+        <button class="modal-btn primary" bindtap="onRefreshRandom">再随机一条</button>
+        <button class="modal-btn ghost" bindtap="onViewRandomDetail">查看详情</button>
+      </view>
     </view>
   </view>
 </view>
+

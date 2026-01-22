@@ -1,6 +1,9 @@
 {
   "pages": [
     "pages/home/index",
+    "pages/fortune/index",
+    "pages/time/index",
+    "pages/me/index",
     "pages/records/index",
     "pages/record-detail/index",
     "pages/random/index",
@@ -16,6 +19,38 @@
     "navigationBarBackgroundColor": "#FFD93D",
     "navigationBarTitleText": "幸福时刻",
     "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#8FA7C7",
+    "selectedColor": "#FF6B6B",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "幸",
+        "iconPath": "images/icons/home.png",
+        "selectedIconPath": "images/icons/home-active.png"
+      },
+      {
+        "pagePath": "pages/fortune/index",
+        "text": "福",
+        "iconPath": "images/icons/examples.png",
+        "selectedIconPath": "images/icons/examples-active.png"
+      },
+      {
+        "pagePath": "pages/time/index",
+        "text": "时",
+        "iconPath": "images/icons/business.png",
+        "selectedIconPath": "images/icons/business-active.png"
+      },
+      {
+        "pagePath": "pages/me/index",
+        "text": "刻",
+        "iconPath": "images/icons/usercenter.png",
+        "selectedIconPath": "images/icons/usercenter-active.png"
+      }
+    ]
   },
   "sitemapLocation": "sitemap.json",
   "style": "v2",

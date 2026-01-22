@@ -1,5 +1,5 @@
 const app = getApp();
-const { createHappinessRecord } = require('../../services/happiness.js');
+const { createHappinessRecord, getHappinessRecords, getRandomHappinessRecord } = require('../../services/happiness.js');
 const { showLoading, hideLoading, showToast, showSuccess, showError } = require('../../utils/toast.js');
 const { TOAST_MESSAGES } = require('../../utils/constants.js');
 
@@ -14,15 +14,56 @@ Page({
     isRecording: false,
     recordingTime: 0,
     recordingTimer: null,
-    isInputFocused: false
+    isInputFocused: false,
+    formMinHeightPx: 0,
+    records: [],
+    page: 1,
+    limit: 10,
+    hasMore: true,
+    loadingRecords: false,
+    randomRecord: null,
+    randomLoading: false,
+    showRandomModal: false
   },
 
   onLoad() {
     this.setCurrentDate();
     this.getLocation();
+    this.setFormMinHeight();
+    this.loadRecords();
+  },
+
+  onPullDownRefresh() {
+    this.setData({ page: 1, hasMore: true }, () => {
+      this.loadRecords(() => {
+        wx.stopPullDownRefresh();
+      });
+    });
+  },
+
+  onReachBottom() {
+    if (this.data.hasMore && !this.data.loadingRecords) {
+      this.loadMore();
+    }
+  },
+
+  setFormMinHeight() {
+    let windowHeight = 0;
+
+    if (wx.getWindowInfo) {
+      windowHeight = wx.getWindowInfo().windowHeight;
+    } else {
+      const systemInfo = wx.getSystemInfoSync();
+      windowHeight = systemInfo.windowHeight;
+    }
+
+    this.setData({
+      formMinHeightPx: Math.floor(windowHeight / 3)
+    });
   },
 
   setCurrentDate() {
+
     const date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -34,6 +75,124 @@ Page({
       currentDate: `${year}年${month}月${day}日 ${weekDay}`
     });
   },
+
+  async loadRecords(callback) {
+    if (this.data.loadingRecords) return;
+
+    this.setData({ loadingRecords: true });
+
+    try {
+      const { page, limit } = this.data;
+      const result = await getHappinessRecords(page, limit);
+
+      if (result.code === 0) {
+        const records = result.data.map(record => ({
+          ...record,
+          created_at: this.formatDate(record.created_at)
+        }));
+
+        this.setData({
+          records: page === 1 ? records : this.data.records.concat(records),
+          hasMore: records.length >= limit
+        });
+      }
+    } catch (error) {
+      console.error('加载记录失败:', error);
+      showToast('加载失败');
+    } finally {
+      this.setData({ loadingRecords: false });
+      callback && callback();
+    }
+  },
+
+  loadMore() {
+    this.setData({
+      page: this.data.page + 1
+    }, () => {
+      this.loadRecords();
+    });
+  },
+
+  onCardTap(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.navigateTo({
+      url: `/pages/record-detail/index?id=${id}`
+    });
+  },
+
+  formatDate(isoString) {
+    const date = new Date(isoString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+
+    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const weekDay = weekDays[date.getDay()];
+
+    return `${month}月${day}日 ${weekDay} ${hour}:${minute}`;
+  },
+
+  openRandomModal() {
+    this.setData({ showRandomModal: true }, () => {
+      this.loadRandomRecord();
+    });
+  },
+
+  closeRandomModal() {
+    this.setData({ showRandomModal: false });
+  },
+
+  async loadRandomRecord() {
+    this.setData({ randomLoading: true });
+
+    try {
+      const result = await getRandomHappinessRecord();
+
+      if (result.code === 0 && result.data) {
+        this.setData({
+          randomRecord: {
+            ...result.data,
+            created_at: this.formatDate(result.data.created_at)
+          }
+        });
+      } else {
+        this.setData({ randomRecord: null });
+      }
+    } catch (error) {
+      console.error('加载随机记录失败:', error);
+      showToast('加载失败');
+      this.setData({ randomRecord: null });
+    } finally {
+      this.setData({ randomLoading: false });
+    }
+  },
+
+  onRefreshRandom() {
+    this.loadRandomRecord();
+  },
+
+  onViewRandomDetail() {
+    if (this.data.randomRecord) {
+      wx.navigateTo({
+        url: `/pages/record-detail/index?id=${this.data.randomRecord._id}`
+      });
+    }
+  },
+
+  onPreviewRandomImage() {
+    const { randomRecord } = this.data;
+    if (randomRecord && randomRecord.image_url) {
+      wx.previewImage({
+        urls: [randomRecord.image_url],
+        current: randomRecord.image_url
+      });
+    }
+  },
+
+  noop() {},
+
 
   onRemoveImage() {
     this.setData({
@@ -275,7 +434,11 @@ Page({
         content: '',
         imageUrl: '',
         voiceUrl: '',
-        submitting: false
+        submitting: false,
+        page: 1,
+        hasMore: true
+      }, () => {
+        this.loadRecords();
       });
 
       hideLoading();
