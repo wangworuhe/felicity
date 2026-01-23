@@ -334,8 +334,9 @@
 
 .records-section {
   margin-top: 20px;
-  padding: 0 20px;
+  padding: 0 12px;
 }
+
 
 .section-header {
   display: flex;
@@ -453,7 +454,7 @@
 .random-fab {
   position: fixed;
   right: 20px;
-  bottom: calc(90px + env(safe-area-inset-bottom));
+  bottom: 30px;
   height: 48px;
   padding: 0 16px;
   border-radius: 24px;
@@ -465,6 +466,7 @@
   box-shadow: 0 8px 20px rgba(255, 107, 107, 0.35);
   z-index: 3;
 }
+
 
 .random-fab:active {
   transform: scale(0.98);
@@ -591,5 +593,120 @@
   color: #333;
   border: 1px solid #FFD93D;
 }
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(31, 59, 109, 0.12);
+}
+
+.card-item:last-child {
+  border-bottom: none;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1F3B6D;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-status {
+  font-size: 12px;
+  color: #FF6B6B;
+  background: #FFF1E8;
+  padding: 4px 8px;
+  border-radius: 10px;
+}
+
+.card-delete {
+  font-size: 12px;
+  color: #999;
+}
+
+.add-card {
+  margin-top: 16px;
+  padding: 12px 0;
+  border: 1px dashed rgba(31, 59, 109, 0.25);
+  border-radius: 16px;
+  text-align: center;
+  color: #3A5A8C;
+}
+
+.add-card-text {
+  font-size: 14px;
+}
+
+.voice-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+
+.voice-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #FFF9E6;
+  border-radius: 10px;
+}
+
+.voice-remove {
+  font-size: 18px;
+  color: #FF6B6B;
+}
+
+.image-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+
+.image-item {
+  position: relative;
+  width: calc(33.33% - 7px);
+  padding-top: 33.33%;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.image-item .preview-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.image-item .image-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  font-size: 16px;
+  border-radius: 50%;
+  background: rgba(255, 107, 107, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 
 

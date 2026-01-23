@@ -7,16 +7,26 @@ import { TOAST_MESSAGES } from './constants.js';
  * 显示加载提示
  * @param {string} title - 提示文字
  */
+let loadingCount = 0;
 export const showLoading = (title = TOAST_MESSAGES.LOADING) => {
-  wx.showLoading({ title, mask: true });
+  loadingCount += 1;
+  if (loadingCount === 1) {
+    wx.showLoading({ title, mask: true });
+  }
 };
 
 /**
  * 隐藏加载提示
  */
 export const hideLoading = () => {
-  wx.hideLoading();
+  if (loadingCount > 0) {
+    loadingCount -= 1;
+  }
+  if (loadingCount === 0) {
+    wx.hideLoading();
+  }
 };
+
 
 /**
  * 显示成功提示

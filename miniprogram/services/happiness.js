@@ -40,3 +40,19 @@ export const getRandomHappinessRecord = () => {
     collection: COLLECTIONS.HAPPINESS_RECORDS
   });
 };
+
+export const upsertHappinessRecord = (data) => {
+  return callFunction('happiness', {
+    type: FUNCTION_TYPES.HAPPINESS_UPSERT,
+    collection: COLLECTIONS.HAPPINESS_RECORDS,
+    data
+  });
+};
+
+export const getHappinessRecordsByDateKey = (dateKey) => {
+  return callFunction('happiness', {
+    type: FUNCTION_TYPES.HAPPINESS_LIST_BY_DATE,
+    collection: COLLECTIONS.HAPPINESS_RECORDS,
+    dateKey
+  });
+};

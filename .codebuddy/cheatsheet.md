@@ -2,7 +2,7 @@
 
 ## 一、Agent 调用
 
-请使用 Brief agent 进行需求审刻 
+请使用 Brief agent 进行需求审核
 
 
 ### 1. 代码审查

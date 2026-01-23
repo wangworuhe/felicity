@@ -5,3 +5,5 @@ export * from './auth.js';
 export * from './database.js';
 export * from './storage.js';
 export * from './happiness.js';
+export * from './fortune.js';
+

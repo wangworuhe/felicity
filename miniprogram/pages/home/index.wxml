@@ -1,105 +1,108 @@
 <view class="container">
   <!-- 顶部日期 -->
   <view class="header">
-
-
     <text class="date">{{currentDate}}</text>
     <text class="greeting">今天记录了吗？</text>
   </view>
 
   <!-- 记录表单 -->
   <view class="form" style="min-height: {{formMinHeightPx}}px;">
-
-    <!-- 文字输入 + 工具栏 -->
-    <view class="input-wrapper {{isInputFocused ? 'focused' : ''}}">
-      <view class="input-box {{isInputFocused ? 'focused' : ''}}">
-        <textarea
-          class="content-input"
-          placeholder="记录一个开心的瞬间..."
-          placeholder-class="placeholder"
-          value="{{content}}"
-          bindinput="onContentInput"
-          bindfocus="onInputFocus"
-          bindblur="onInputBlur"
-          maxlength="500"
-          show-confirm-bar="{{false}}"
-          fixed="{{true}}"
-        />
-        <view class="char-count">
-          <text class="{{content.length > 400 ? 'warning' : ''}} {{content.length >= 500 ? 'error' : ''}}">{{content.length}}/500</text>
+    <view class="cards">
+      <view class="card-item" wx:for="{{cards}}" wx:for-item="card" wx:for-index="cardIndex" wx:key="localId">
+        <view class="card-header">
+          <text class="card-title">幸福时刻 {{cardIndex + 1}}</text>
+          <view class="card-meta">
+            <text class="card-status" wx:if="{{card.cloudId}}">已保存</text>
+            <text class="card-delete" bindtap="onDeleteCard" data-index="{{cardIndex}}">删除</text>
+          </view>
         </view>
-      </view>
 
-      <!-- 底部工具栏 -->
-      <view class="input-toolbar {{isInputFocused ? 'focused' : ''}}">
-        <view class="toolbar-left">
-          <!-- 图片按钮 -->
-          <view
-            class="tool-btn image-btn {{imageUrl ? 'has-image' : ''}}"
-            bindtap="onChooseImage"
-          >
-            <view class="tool-icon-dot"></view>
-            <text class="tool-label">图片</text>
+
+        <view class="input-wrapper {{focusedCardIndex === cardIndex ? 'focused' : ''}}">
+          <view class="input-box {{focusedCardIndex === cardIndex ? 'focused' : ''}}">
+            <textarea
+              class="content-input"
+              placeholder="记录一个开心的瞬间..."
+              placeholder-class="placeholder"
+              value="{{card.content}}"
+              bindinput="onCardContentInput"
+              bindfocus="onInputFocus"
+              bindblur="onInputBlur"
+              data-index="{{cardIndex}}"
+              maxlength="500"
+              show-confirm-bar="{{false}}"
+              fixed="{{true}}"
+            />
+            <view class="char-count">
+              <text class="{{card.content.length > 400 ? 'warning' : ''}} {{card.content.length >= 500 ? 'error' : ''}}">{{card.content.length}}/500</text>
+            </view>
           </view>
 
-          <!-- 语音按钮 -->
-          <view
-            class="tool-btn voice-btn {{isRecording ? 'recording' : ''}}"
-            bindtouchstart="onVoiceStart"
-            bindtouchend="onVoiceEnd"
-            bindtouchcancel="onVoiceCancel"
-          >
-            <view class="tool-icon-dot"></view>
-            <text class="tool-label">{{isRecording ? '录音中' : '语音'}}</text>
+          <view class="input-toolbar {{focusedCardIndex === cardIndex ? 'focused' : ''}}">
+            <view class="toolbar-left">
+              <view
+                class="tool-btn image-btn {{card.imageUrls.length ? 'has-image' : ''}}"
+                bindtap="onChooseImage"
+                data-index="{{cardIndex}}"
+              >
+                <view class="tool-icon-dot"></view>
+                <text class="tool-label">图片</text>
+              </view>
+
+              <view
+                class="tool-btn voice-btn {{isRecording && recordingCardIndex === cardIndex ? 'recording' : ''}}"
+                bindtouchstart="onVoiceStart"
+                bindtouchend="onVoiceEnd"
+                bindtouchcancel="onVoiceCancel"
+                data-index="{{cardIndex}}"
+              >
+                <view class="tool-icon-dot"></view>
+                <text class="tool-label">{{isRecording && recordingCardIndex === cardIndex ? '录音中' : '语音'}}</text>
+              </view>
+            </view>
           </view>
-
         </view>
+
+
+        <view class="recording-tip" wx:if="{{isRecording && recordingCardIndex === cardIndex}}">
+          <text>正在录音 {{recordingTime}}s，松开结束</text>
+        </view>
+
+        <view class="voice-preview" wx:if="{{card.voiceUrls.length}}">
+          <view class="voice-item" wx:for="{{card.voiceUrls}}" wx:for-item="voice" wx:for-index="voiceIndex" wx:key="voiceIndex">
+            <text class="voice-text">语音 {{voiceIndex + 1}}</text>
+            <text class="voice-remove" bindtap="onRemoveVoice" data-index="{{cardIndex}}" data-voice-index="{{voiceIndex}}">×</text>
+          </view>
+        </view>
+
+        <view class="image-preview" wx:if="{{card.imageUrls.length}}">
+          <view class="image-item" wx:for="{{card.imageUrls}}" wx:for-item="image" wx:for-index="imageIndex" wx:key="imageIndex">
+            <image class="preview-image" src="{{image}}" mode="aspectFill" />
+            <text class="image-remove" bindtap="onRemoveImage" data-index="{{cardIndex}}" data-image-index="{{imageIndex}}">×</text>
+          </view>
+        </view>
+
+
+        <view class="location-group" wx:if="{{location}}">
+          <text class="location-text">{{location.name || '未知位置'}}</text>
+        </view>
+
+        <button
+          class="submit-btn {{(card.content || card.voiceUrls.length || card.imageUrls.length) ? 'active' : ''}}"
+          bindtap="onSaveCard"
+          data-index="{{cardIndex}}"
+          disabled="{{!(card.content || card.voiceUrls.length || card.imageUrls.length) || submitting}}"
+          loading="{{submitting}}"
+        >
+          {{submitting ? '保存中...' : '保存这一条'}}
+        </button>
+
       </view>
     </view>
 
-    <!-- 录音提示 -->
-    <view class="recording-tip" wx:if="{{isRecording}}">
-      <text>正在录音 {{recordingTime}}s，松开结束</text>
+    <view class="add-card" bindtap="onAddCard">
+      <text class="add-card-text">+ 添加一条</text>
     </view>
-
-    <!-- 已上传录音预览 -->
-    <view class="voice-preview" wx:if="{{voiceUrl}}">
-      <view class="voice-info">
-        <text class="voice-icon">🎤</text>
-        <text class="voice-text">已录制语音</text>
-      </view>
-      <view class="voice-remove" bindtap="onRemoveVoice">
-        <text>×</text>
-      </view>
-    </view>
-
-    <!-- 已上传图片预览 -->
-    <view class="image-preview" wx:if="{{imageUrl}}">
-      <image
-        class="preview-image"
-        src="{{imageUrl}}"
-        mode="aspectFill"
-      />
-      <view class="image-remove" bindtap="onRemoveImage">
-        <text>×</text>
-      </view>
-    </view>
-
-    <!-- 位置信息 -->
-    <view class="location-group" wx:if="{{location}}">
-      <text class="location-icon">📍</text>
-      <text class="location-text">{{location.name || '未知位置'}}</text>
-    </view>
-
-    <!-- 提交按钮 -->
-    <button
-      class="submit-btn {{content || voiceUrl ? 'active' : ''}}"
-      bindtap="onSubmit"
-      disabled="{{!content && !voiceUrl || submitting}}"
-      loading="{{submitting}}"
-    >
-      {{submitting ? '记录中...' : '保存幸福'}}
-    </button>
   </view>
 
   <!-- 历史记录 -->
@@ -207,4 +210,3 @@
     </view>
   </view>
 </view>
-

@@ -1,4 +1,69 @@
-<view class="container placeholder">
-  <text class="title">福</text>
-  <text class="desc">功能正在准备中</text>
+<view class="container">
+  <view class="input-card">
+    <textarea
+      class="reflection-input"
+      placeholder="写下今天的一点反思..."
+      maxlength="500"
+      auto-height="true"
+      focus="{{inputFocus}}"
+      value="{{inputValue}}"
+      bindinput="onInputChange"
+      bindfocus="onInputFocus"
+      bindblur="onInputBlur"
+    />
+
+    <view class="actions">
+      <button class="save-btn" bindtap="onSave">保存</button>
+    </view>
+  </view>
+
+  <view class="section-title">历史记录</view>
+
+  <view class="empty" wx:if="{{records.length === 0 && !loading}}">
+    <text class="empty-text">还没有记录，从今天开始写一条吧</text>
+  </view>
+
+  <view class="list" wx:if="{{records.length > 0}}">
+    <view
+      class="record-card"
+      wx:for="{{records}}"
+      wx:key="_id"
+    >
+      <view class="record-header">
+        <text class="record-time">{{item.created_at}}</text>
+        <text class="record-edit-hint" wx:if="{{!item.isEditing}}" bindtap="onEditTap" data-index="{{index}}">编辑</text>
+      </view>
+
+      <view class="record-content" wx:if="{{!item.isEditing}}">
+        <text class="record-text">{{item.content}}</text>
+      </view>
+
+      <view class="record-edit" wx:if="{{item.isEditing}}">
+        <textarea
+          class="edit-textarea"
+          value="{{item.editValue}}"
+          auto-height="true"
+          maxlength="500"
+          bindinput="onEditInput"
+          data-index="{{index}}"
+        />
+        <view class="edit-actions">
+          <button class="edit-cancel-btn" bindtap="onCancelEdit" data-index="{{index}}">取消</button>
+          <button class="edit-save-btn" bindtap="onSaveEdit" data-index="{{index}}" data-id="{{item._id}}">保存</button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="load-more" wx:if="{{hasMore && records.length > 0}}">
+    <text>{{loading ? '加载中...' : '加载更多'}}</text>
+  </view>
+
+  <view class="footer-tip" wx:if="{{!hasMore && records.length > 0}}">
+    <text>没有更多记录了</text>
+  </view>
+
+  <view class="back-top" wx:if="{{showBackTop}}" bindtap="onBackTop">
+    <text class="back-top-icon">↑</text>
+  </view>
 </view>

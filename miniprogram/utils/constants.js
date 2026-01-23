@@ -13,7 +13,9 @@ export const CLOUD_FUNCTIONS = {
 export const COLLECTIONS = {
   SALES: 'sales',
   HAPPINESS_RECORDS: 'happiness_records',
+  FORTUNE_RECORDS: 'fortune_records',
 };
+
 
 // 云函数操作类型
 export const FUNCTION_TYPES = {
@@ -37,7 +39,15 @@ export const FUNCTION_TYPES = {
   HAPPINESS_DETAIL: 'getRecordDetail',
   HAPPINESS_DELETE: 'deleteRecord',
   HAPPINESS_RANDOM: 'getRandomRecord',
+  HAPPINESS_UPSERT: 'upsertRecord',
+  HAPPINESS_LIST_BY_DATE: 'listRecordsByDateKey',
+
+  // 福-每日反思相关
+  FORTUNE_CREATE: 'createRecord',
+  FORTUNE_LIST: 'listRecords',
+  FORTUNE_UPSERT: 'upsertRecord',
 };
+
 
 // 环境配置
 export const ENV_CONFIG = {

@@ -4,7 +4,7 @@ const db = cloud.database();
 const _ = db.command;
 
 exports.main = async (event, context) => {
-  const { type, collection, data, page, limit, id } = event;
+  const { type, collection, data, page, limit, id, dateKey } = event;
   const wxContext = cloud.getWXContext();
 
   switch (type) {
@@ -18,6 +18,10 @@ exports.main = async (event, context) => {
       return await deleteRecord(collection, wxContext.OPENID, id);
     case 'getRandomRecord':
       return await getRandomRecord(collection, wxContext.OPENID);
+    case 'upsertRecord':
+      return await upsertRecord(collection, wxContext.OPENID, data);
+    case 'listRecordsByDateKey':
+      return await listRecordsByDateKey(collection, wxContext.OPENID, dateKey);
     default:
       return {
         code: -1,
@@ -175,3 +179,95 @@ async function getRandomRecord(collection, openid) {
     };
   }
 }
+
+async function listRecordsByDateKey(collection, openid, dateKey) {
+  try {
+    const result = await db.collection(collection)
+      .where({ _openid: openid, date_key: dateKey })
+      .orderBy('order', 'asc')
+      .orderBy('created_at', 'asc')
+      .get();
+
+    return {
+      code: 0,
+      message: '获取成功',
+      data: result.data
+    };
+  } catch (error) {
+    console.error('按日期获取记录失败:', error);
+    return {
+      code: -1,
+      message: '获取记录失败',
+      error: error.message
+    };
+  }
+}
+
+async function upsertRecord(collection, openid, data) {
+  try {
+    const now = new Date().toISOString();
+    const record = {
+      ...data,
+      _openid: openid,
+      updated_at: now
+    };
+
+    if (record._id) {
+      const { _id } = record;
+      delete record._id;
+
+      await db.collection(collection)
+        .where({ _id, _openid: openid })
+        .update({ data: record });
+
+      return {
+        code: 0,
+        message: '更新成功',
+        data: { _id, ...record }
+      };
+    }
+
+    const existResult = await db.collection(collection)
+      .where({ _openid: openid, date_key: record.date_key, order: record.order })
+      .limit(1)
+      .get();
+
+    if (existResult.data.length > 0) {
+      const existId = existResult.data[0]._id;
+      delete record._id;
+
+      await db.collection(collection)
+        .where({ _id: existId, _openid: openid })
+        .update({ data: record });
+
+      return {
+        code: 0,
+        message: '更新成功',
+        data: { _id: existId, ...record }
+      };
+    }
+
+    const createData = {
+      ...record,
+      created_at: now
+    };
+
+    const result = await db.collection(collection).add({
+      data: createData
+    });
+
+    return {
+      code: 0,
+      message: '记录成功',
+      data: { _id: result._id, ...createData }
+    };
+  } catch (error) {
+    console.error('更新/创建记录失败:', error);
+    return {
+      code: -1,
+      message: '更新记录失败',
+      error: error.message
+    };
+  }
+}
+
