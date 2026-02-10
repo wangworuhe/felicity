@@ -2,7 +2,6 @@
   <!-- 顶部日期 -->
   <view class="header">
     <text class="date">{{currentDate}}</text>
-    <text class="greeting">今天记录了吗？</text>
   </view>
 
   <!-- 记录表单 -->
@@ -60,6 +59,16 @@
                 <text class="tool-label">{{isRecording && recordingCardIndex === cardIndex ? '录音中' : '语音'}}</text>
               </view>
             </view>
+            <button
+              class="submit-btn {{(card.content || card.voiceUrls.length || card.imageUrls.length) ? 'active' : ''}}"
+              bindtap="onSaveCard"
+              data-index="{{cardIndex}}"
+              size="mini"
+              disabled="{{!(card.content || card.voiceUrls.length || card.imageUrls.length) || submitting}}"
+              loading="{{submitting}}"
+            >
+              {{submitting ? '保存中...' : '保存'}}
+            </button>
           </view>
         </view>
 
@@ -86,16 +95,6 @@
         <view class="location-group" wx:if="{{location}}">
           <text class="location-text">{{location.name || '未知位置'}}</text>
         </view>
-
-        <button
-          class="submit-btn {{(card.content || card.voiceUrls.length || card.imageUrls.length) ? 'active' : ''}}"
-          bindtap="onSaveCard"
-          data-index="{{cardIndex}}"
-          disabled="{{!(card.content || card.voiceUrls.length || card.imageUrls.length) || submitting}}"
-          loading="{{submitting}}"
-        >
-          {{submitting ? '保存中...' : '保存这一条'}}
-        </button>
 
       </view>
     </view>

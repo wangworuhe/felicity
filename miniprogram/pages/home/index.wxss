@@ -7,21 +7,16 @@
 
 
 .header {
-  margin-bottom: 20px;
+  margin-bottom: 8px;
 }
 
 .date {
   display: block;
-  font-size: 24px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
   color: #1F3B6D;
-  margin-bottom: 8px;
-}
-
-.greeting {
-  display: block;
-  font-size: 16px;
-  color: #3A5A8C;
+  margin-bottom: 0;
 }
 
 
@@ -306,30 +301,36 @@
 }
 
 .submit-btn {
-  width: 100%;
-  margin: 0;
-  margin-top: auto;
-  height: 48px;
+  width: 74px !important;
+  min-width: 74px !important;
+  max-width: 74px !important;
+  flex: 0 0 74px;
+  margin: 0 0 0 auto !important;
+  padding: 0 !important;
+  height: 34px;
+  line-height: 34px;
   background: #FFF9E6;
   color: #B8A88A;
   border: none;
-  border-radius: 28px;
-  font-size: 16px;
-  font-weight: bold;
-  display: flex;
+  border-radius: 17px;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
   transition: all 0.3s ease-out;
 }
 
 .submit-btn.active {
   background: linear-gradient(135deg, #FFD93D 0%, #FFB84D 50%, #FF6B6B 100%);
   color: white;
-  box-shadow: 0 4px 16px rgba(255, 107, 107, 0.4);
+  box-shadow: 0 3px 10px rgba(255, 107, 107, 0.25);
 }
 
 .submit-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
 }
 
 .records-section {
