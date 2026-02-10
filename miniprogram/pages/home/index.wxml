@@ -28,12 +28,13 @@
               bindfocus="onInputFocus"
               bindblur="onInputBlur"
               data-index="{{cardIndex}}"
-              maxlength="500"
+              maxlength="-1"
               show-confirm-bar="{{false}}"
               fixed="{{true}}"
+              auto-height
             />
             <view class="char-count">
-              <text class="{{card.content.length > 400 ? 'warning' : ''}} {{card.content.length >= 500 ? 'error' : ''}}">{{card.content.length}}/500</text>
+              <text>{{card.content.length}}</text>
             </view>
           </view>
 
@@ -86,7 +87,7 @@
 
         <view class="image-preview" wx:if="{{card.imageUrls.length}}">
           <view class="image-item" wx:for="{{card.imageUrls}}" wx:for-item="image" wx:for-index="imageIndex" wx:key="imageIndex">
-            <image class="preview-image" src="{{image}}" mode="aspectFill" />
+            <image class="preview-image" src="{{image}}" mode="aspectFill" bindtap="onPreviewImage" data-index="{{cardIndex}}" data-url="{{image}}" />
             <text class="image-remove" bindtap="onRemoveImage" data-index="{{cardIndex}}" data-image-index="{{imageIndex}}">×</text>
           </view>
         </view>

@@ -583,6 +583,23 @@ Page({
     }
   },
 
+  async onPreviewImage(e) {
+    const { index, url } = e.currentTarget.dataset
+    const card = this.data.cards[index]
+    if (!card || !card.imageUrls.length) return
+    try {
+      const { fileList } = await wx.cloud.getTempFileURL({ fileList: card.imageUrls })
+      const tempUrls = fileList.map(f => f.tempFileURL)
+      const currentTemp = fileList.find(f => f.fileID === url)
+      wx.previewImage({
+        urls: tempUrls,
+        current: currentTemp ? currentTemp.tempFileURL : tempUrls[0]
+      })
+    } catch (err) {
+      wx.previewImage({ urls: card.imageUrls, current: url })
+    }
+  },
+
   onPreviewRandomImage() {
     const { randomRecord } = this.data;
     if (randomRecord && randomRecord.image_url) {
