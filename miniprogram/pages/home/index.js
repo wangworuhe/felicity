@@ -42,6 +42,13 @@ Page({
     this.loadRecords();
   },
 
+  onShow() {
+    if (this._hasLoaded) {
+      this.setData({ page: 1, hasMore: true }, () => this.loadRecords());
+    }
+    this._hasLoaded = true;
+  },
+
   onPullDownRefresh() {
     this.setData({ page: 1, hasMore: true }, async () => {
       await this.initCards();
@@ -491,12 +498,16 @@ Page({
         const records = result.data.map(record => ({
           ...record,
           image_url: record.image_url || (Array.isArray(record.image_urls) ? record.image_urls[0] : ''),
-          created_at: this.formatDate(record.created_at)
+          created_at: this.formatDate(record.created_at, true),
+          _needCollapse: false,
+          _expanded: false
         }));
 
         this.setData({
           records: page === 1 ? records : this.data.records.concat(records),
           hasMore: records.length >= limit
+        }, () => {
+          this.checkContentOverflow();
         });
       }
     } catch (error) {
@@ -516,6 +527,96 @@ Page({
     });
   },
 
+  checkContentOverflow() {
+    const COLLAPSE_HEIGHT = 96;
+    wx.nextTick(() => {
+      const query = this.createSelectorQuery();
+      query.selectAll('.record-card .content-text').boundingClientRect();
+      query.exec((res) => {
+        if (!res || !res[0]) return;
+        const rects = res[0];
+        const { records } = this.data;
+        const updates = {};
+        rects.forEach((rect, i) => {
+          if (i < records.length && rect.height > COLLAPSE_HEIGHT && !records[i]._needCollapse) {
+            updates[`records[${i}]._needCollapse`] = true;
+          }
+        });
+        if (Object.keys(updates).length > 0) {
+          this.setData(updates);
+        }
+      });
+    });
+  },
+
+  onRecordAction(e) {
+    const index = e.currentTarget.dataset.index;
+    const record = this.data.records[index];
+    if (!record) return;
+
+    wx.showActionSheet({
+      itemList: ['编辑', '复制', '删除'],
+      success: (res) => {
+        switch (res.tapIndex) {
+          case 0:
+            this.editRecord(record);
+            break;
+          case 1:
+            this.copyRecord(record);
+            break;
+          case 2:
+            this.deleteRecord(record);
+            break;
+        }
+      }
+    });
+  },
+
+  editRecord(record) {
+    wx.navigateTo({
+      url: `/pages/record-detail/index?id=${record._id}&edit=true`
+    });
+  },
+
+  copyRecord(record) {
+    wx.setClipboardData({
+      data: record.content || ''
+    });
+  },
+
+  deleteRecord(record) {
+    wx.showModal({
+      title: '确认删除',
+      content: '删除后无法恢复，确定要删除这条记录吗？',
+      confirmText: '删除',
+      confirmColor: '#FF6B6B',
+      success: async (res) => {
+        if (!res.confirm) return;
+        showLoading('删除中...');
+        try {
+          const result = await deleteHappinessRecord(record._id);
+          if (result.code === 0) {
+            showSuccess(TOAST_MESSAGES.RECORD_DELETE_SUCCESS);
+            this.setData({ page: 1, hasMore: true }, () => this.loadRecords());
+          } else {
+            showToast(result.message || TOAST_MESSAGES.RECORD_DELETE_FAILED);
+          }
+        } catch (error) {
+          console.error('删除记录失败:', error);
+          showToast(TOAST_MESSAGES.RECORD_DELETE_FAILED);
+        } finally {
+          hideLoading();
+        }
+      }
+    });
+  },
+
+  toggleExpand(e) {
+    const index = e.currentTarget.dataset.index;
+    const key = `records[${index}]._expanded`;
+    this.setData({ [key]: !this.data.records[index]._expanded });
+  },
+
   onCardTap(e) {
     const id = e.currentTarget.dataset.id;
     wx.navigateTo({
@@ -523,8 +624,9 @@ Page({
     });
   },
 
-  formatDate(isoString) {
+  formatDate(isoString, includeYear = false) {
     const date = new Date(isoString);
+    const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const hour = String(date.getHours()).padStart(2, '0');
@@ -532,6 +634,10 @@ Page({
 
     const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
     const weekDay = weekDays[date.getDay()];
+
+    if (includeYear) {
+      return `${year}年${month}月${day}日 ${weekDay} ${hour}:${minute}`;
+    }
 
     return `${month}月${day}日 ${weekDay} ${hour}:${minute}`;
   },

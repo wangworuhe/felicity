@@ -9,7 +9,17 @@
     </view>
 
     <view class="card-content">
-      <text class="content-text">{{record.content}}</text>
+      <textarea
+        wx:if="{{editing}}"
+        class="edit-textarea"
+        value="{{editContent}}"
+        bindinput="onEditInput"
+        auto-height
+        maxlength="-1"
+        focus="{{editing}}"
+        placeholder="写点什么..."
+      />
+      <text wx:else class="content-text">{{record.content}}</text>
     </view>
 
     <view class="card-image" wx:if="{{record.image_url}}">
@@ -23,7 +33,15 @@
   </view>
 
   <!-- 操作按钮 -->
-  <view class="actions">
+  <view class="actions" wx:if="{{editing}}">
+    <button class="action-btn save-btn" bindtap="onSaveEdit" type="default">
+      <text class="btn-text">保存</text>
+    </button>
+    <button class="action-btn cancel-btn" bindtap="onCancelEdit" type="default">
+      <text class="btn-text">取消</text>
+    </button>
+  </view>
+  <view class="actions" wx:else>
     <button class="action-btn share-btn" bindtap="onShare" type="default">
       <text class="btn-icon">📤</text>
       <text class="btn-text">生成海报</text>

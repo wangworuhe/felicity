@@ -1,4 +1,4 @@
-const { getHappinessRecordDetail, deleteHappinessRecord } = require('../../services/happiness.js');
+const { getHappinessRecordDetail, deleteHappinessRecord, upsertHappinessRecord } = require('../../services/happiness.js');
 const { showLoading, hideLoading, showToast, showSuccess, showError } = require('../../utils/toast.js');
 const { TOAST_MESSAGES } = require('../../utils/constants.js');
 
@@ -6,12 +6,17 @@ Page({
   data: {
     record: null,
     id: '',
-    loading: true
+    loading: true,
+    editing: false,
+    editContent: ''
   },
 
   onLoad(options) {
     if (options.id) {
-      this.setData({ id: options.id });
+      this.setData({
+        id: options.id,
+        editing: options.edit === 'true'
+      });
       this.loadRecordDetail();
     } else {
       showToast('记录不存在');
@@ -33,6 +38,7 @@ Page({
             ...result.data,
             created_at: this.formatDate(result.data.created_at)
           },
+          editContent: result.data.content || '',
           loading: false
         });
       } else {
@@ -104,6 +110,54 @@ Page({
       console.error('删除记录失败:', error);
       hideLoading();
       showToast(TOAST_MESSAGES.RECORD_DELETE_FAILED);
+    }
+  },
+
+  onEditInput(e) {
+    this.setData({ editContent: e.detail.value });
+  },
+
+  onCancelEdit() {
+    this.setData({
+      editing: false,
+      editContent: this.data.record.content || ''
+    });
+  },
+
+  async onSaveEdit() {
+    const { editContent, record } = this.data;
+    if (!editContent.trim()) {
+      showToast('内容不能为空');
+      return;
+    }
+
+    showLoading('保存中...');
+    try {
+      const payload = {
+        _id: record._id,
+        content: editContent,
+        image_urls: record.image_urls || (record.image_url ? [record.image_url] : []),
+        voice_urls: record.voice_urls || [],
+        location: record.location,
+        date_key: record.date_key,
+        order: record.order
+      };
+
+      const result = await upsertHappinessRecord(payload);
+      if (result.code === 0) {
+        this.setData({
+          editing: false,
+          record: { ...this.data.record, content: editContent }
+        });
+        showSuccess('保存成功');
+      } else {
+        showToast(result.message || '保存失败');
+      }
+    } catch (error) {
+      console.error('保存失败:', error);
+      showToast('保存失败');
+    } finally {
+      hideLoading();
     }
   },
 

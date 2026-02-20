@@ -121,18 +121,29 @@
         class="record-card"
         wx:for="{{records}}"
         wx:key="_id"
-        bindtap="onCardTap"
-        data-id="{{item._id}}"
       >
         <view class="card-header">
           <text class="card-time">{{item.created_at}}</text>
-          <text class="card-location" wx:if="{{item.location && item.location.name}}">
-            {{item.location.name}}
-          </text>
+          <view class="card-header-right">
+            <text class="card-location" wx:if="{{item.location && item.location.name}}">
+              {{item.location.name}}
+            </text>
+            <view class="more-btn" catchtap="onRecordAction" data-index="{{index}}">
+              <text class="more-dots">···</text>
+            </view>
+          </view>
         </view>
 
         <view class="card-content">
-          <text class="content-text">{{item.content}}</text>
+          <view class="content-text-wrap {{item._needCollapse && !item._expanded ? 'collapsed' : ''}}">
+            <text class="content-text">{{item.content}}</text>
+          </view>
+          <view class="expand-btn" wx:if="{{item._needCollapse && !item._expanded}}" catchtap="toggleExpand" data-index="{{index}}">
+            <text class="expand-text">展开</text>
+          </view>
+          <view class="expand-btn" wx:if="{{item._needCollapse && item._expanded}}" catchtap="toggleExpand" data-index="{{index}}">
+            <text class="expand-text">收起</text>
+          </view>
         </view>
 
         <view class="card-image" wx:if="{{item.image_url}}">
