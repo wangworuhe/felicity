@@ -4,7 +4,10 @@
   "navigationBarTextStyle": "black",
   "backgroundColor": "#EAF7FF",
   "enablePullDownRefresh": true,
-  "onReachBottomDistance": 50
+  "onReachBottomDistance": 50,
+  "usingComponents": {
+    "edit-modal": "/components/editModal/index"
+  }
 }
 
 

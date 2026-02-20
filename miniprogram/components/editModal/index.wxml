@@ -1,0 +1,78 @@
+<view class="edit-modal-mask" wx:if="{{visible}}" catchtap="onClose"></view>
+<view class="edit-modal" wx:if="{{visible}}" catchtap="noop">
+  <view class="modal-header">
+    <text class="modal-title">编辑记录</text>
+    <text class="modal-close" catchtap="onClose">×</text>
+  </view>
+
+  <scroll-view class="modal-body" scroll-y>
+    <textarea
+      class="edit-textarea"
+      value="{{editContent}}"
+      bindinput="onEditInput"
+      placeholder="写点什么..."
+      placeholder-class="edit-placeholder"
+      maxlength="-1"
+      auto-height
+      show-confirm-bar="{{false}}"
+    />
+
+    <view class="media-section" wx:if="{{imageUrls.length}}">
+      <view class="media-label">图片</view>
+      <view class="image-list">
+        <view class="image-item" wx:for="{{imageUrls}}" wx:key="index">
+          <image
+            class="preview-image"
+            src="{{item}}"
+            mode="aspectFill"
+            bindtap="onPreviewImage"
+            data-url="{{item}}"
+          />
+          <text class="remove-btn" catchtap="onRemoveImage" data-index="{{index}}">×</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="media-section" wx:if="{{voiceUrls.length}}">
+      <view class="media-label">语音</view>
+      <view class="voice-list">
+        <view class="voice-item" wx:for="{{voiceUrls}}" wx:key="index">
+          <text class="voice-text">语音 {{index + 1}}</text>
+          <text class="remove-btn" catchtap="onRemoveVoice" data-index="{{index}}">×</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="recording-tip" wx:if="{{isRecording}}">
+      <text>正在录音 {{recordingTime}}s，松开结束</text>
+    </view>
+  </scroll-view>
+
+  <view class="modal-footer">
+    <view class="toolbar">
+      <view
+        class="tool-btn {{imageUrls.length ? 'has-media' : ''}}"
+        bindtap="onChooseImage"
+      >
+        <text class="tool-label">图片</text>
+      </view>
+      <view
+        class="tool-btn {{isRecording ? 'recording' : ''}}"
+        bindtouchstart="onVoiceStart"
+        bindtouchend="onVoiceEnd"
+        bindtouchcancel="onVoiceCancel"
+      >
+        <text class="tool-label">{{isRecording ? '录音中' : '语音'}}</text>
+      </view>
+    </view>
+    <button
+      class="save-btn {{(editContent || imageUrls.length || voiceUrls.length) ? 'active' : ''}}"
+      bindtap="onSave"
+      size="mini"
+      disabled="{{!(editContent || imageUrls.length || voiceUrls.length) || saving}}"
+      loading="{{saving}}"
+    >
+      {{saving ? '保存中...' : '保存'}}
+    </button>
+  </view>
+</view>

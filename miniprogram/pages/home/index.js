@@ -31,7 +31,9 @@ Page({
     randomRecord: null,
     randomLoading: false,
     showRandomModal: false,
-    actionPopup: { visible: false, y: 0, right: 0, index: -1 }
+    actionPopup: { visible: false, y: 0, right: 0, index: -1 },
+    editModalVisible: false,
+    editModalRecord: null
   },
 
   onLoad() {
@@ -599,9 +601,19 @@ Page({
   noop() {},
 
   editRecord(record) {
-    wx.navigateTo({
-      url: `/pages/record-detail/index?id=${record._id}&edit=true`
+    this.setData({
+      editModalVisible: true,
+      editModalRecord: record
     });
+  },
+
+  onEditSave() {
+    this.setData({ editModalVisible: false });
+    this.setData({ page: 1, hasMore: true }, () => this.loadRecords());
+  },
+
+  onEditClose() {
+    this.setData({ editModalVisible: false });
   },
 
   copyRecord(record) {
