@@ -437,6 +437,48 @@
   line-height: 1;
 }
 
+.popup-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+}
+
+.action-popup {
+  position: fixed;
+  z-index: 11;
+  background: #fff;
+  border-radius: 12px;
+  padding: 4px 0;
+  min-width: 120px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.popup-item {
+  padding: 12px 20px;
+}
+
+.popup-item:active {
+  background: #f5f5f5;
+}
+
+.popup-item-text {
+  font-size: 15px;
+  color: #333;
+}
+
+.popup-item-text.delete {
+  color: #FF4D4F;
+}
+
+.popup-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 0 12px;
+}
+
 .card-content {
   margin-bottom: 12px;
 }

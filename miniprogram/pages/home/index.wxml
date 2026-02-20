@@ -165,6 +165,26 @@
     </view>
   </view>
 
+  <!-- 操作弹窗 -->
+  <view class="popup-mask" wx:if="{{actionPopup.visible}}" catchtap="closeActionPopup"></view>
+  <view
+    class="action-popup"
+    wx:if="{{actionPopup.visible}}"
+    style="top: {{actionPopup.y}}px; right: {{actionPopup.right}}px;"
+    catchtap="noop"
+  >
+    <view class="popup-item" catchtap="onPopupEdit">
+      <text class="popup-item-text">编辑</text>
+    </view>
+    <view class="popup-item" catchtap="onPopupCopy">
+      <text class="popup-item-text">复制</text>
+    </view>
+    <view class="popup-divider"></view>
+    <view class="popup-item" catchtap="onPopupDelete">
+      <text class="popup-item-text delete">删除</text>
+    </view>
+  </view>
+
   <!-- 随机回顾悬浮按钮 -->
   <view class="random-fab" bindtap="openRandomModal">
     <text class="random-fab-text">随机回顾</text>

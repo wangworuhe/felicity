@@ -30,7 +30,8 @@ Page({
     loadingRecords: false,
     randomRecord: null,
     randomLoading: false,
-    showRandomModal: false
+    showRandomModal: false,
+    actionPopup: { visible: false, y: 0, right: 0, index: -1 }
   },
 
   onLoad() {
@@ -554,23 +555,48 @@ Page({
     const record = this.data.records[index];
     if (!record) return;
 
-    wx.showActionSheet({
-      itemList: ['编辑', '复制', '删除'],
-      success: (res) => {
-        switch (res.tapIndex) {
-          case 0:
-            this.editRecord(record);
-            break;
-          case 1:
-            this.copyRecord(record);
-            break;
-          case 2:
-            this.deleteRecord(record);
-            break;
-        }
-      }
+    const query = this.createSelectorQuery();
+    query.selectAll('.more-btn').boundingClientRect();
+    query.selectViewport().scrollOffset();
+    query.exec((res) => {
+      const buttons = res[0];
+      const btn = buttons[index];
+      if (!btn) return;
+
+      const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
+      const screenWidth = windowInfo.windowWidth;
+      const right = screenWidth - btn.right + btn.width;
+      const y = btn.bottom + 4;
+
+      this.setData({
+        actionPopup: { visible: true, y, right, index }
+      });
     });
   },
+
+  closeActionPopup() {
+    this.setData({ 'actionPopup.visible': false });
+  },
+
+  onPopupEdit() {
+    const record = this.data.records[this.data.actionPopup.index];
+    this.closeActionPopup();
+    if (record) this.editRecord(record);
+  },
+
+  onPopupCopy() {
+    const record = this.data.records[this.data.actionPopup.index];
+    this.closeActionPopup();
+    if (record) this.copyRecord(record);
+  },
+
+  onPopupDelete() {
+    const record = this.data.records[this.data.actionPopup.index];
+    this.closeActionPopup();
+    if (record) this.deleteRecord(record);
+  },
+
+  noop() {},
 
   editRecord(record) {
     wx.navigateTo({
