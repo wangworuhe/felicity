@@ -768,9 +768,63 @@
   border-radius: 10px;
 }
 
+.voice-play-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.voice-play-icon {
+  font-size: 14px;
+  color: #FF8C00;
+}
+
 .voice-remove {
   font-size: 18px;
   color: #FF6B6B;
+}
+
+.record-voice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.record-voice-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #FFF9E6;
+  border-radius: 10px;
+  width: fit-content;
+}
+
+.record-voice-item .voice-play-icon {
+  font-size: 13px;
+  color: #FF8C00;
+}
+
+.record-voice-item .voice-text {
+  font-size: 13px;
+  color: #999;
+}
+
+.card-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.card-images .card-img {
+  width: calc(33.33% - 6px);
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  object-fit: cover;
 }
 
 .image-preview {

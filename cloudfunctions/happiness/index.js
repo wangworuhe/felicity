@@ -3,15 +3,24 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
+const ALLOWED_COLLECTIONS = ['happiness_records', 'fortune_records'];
+
 exports.main = async (event, context) => {
   const { type, collection, data, page, limit, id, dateKey } = event;
   const wxContext = cloud.getWXContext();
+
+  if (collection && !ALLOWED_COLLECTIONS.includes(collection)) {
+    return { code: -1, message: '无效的集合名称' };
+  }
+
+  const safePage = Math.max(1, Math.floor(Number(page) || 1));
+  const safeLimit = Math.min(50, Math.max(1, Math.floor(Number(limit) || 10)));
 
   switch (type) {
     case 'createRecord':
       return await createRecord(collection, wxContext.OPENID, data);
     case 'listRecords':
-      return await listRecords(collection, wxContext.OPENID, page, limit);
+      return await listRecords(collection, wxContext.OPENID, safePage, safeLimit);
     case 'getRecordDetail':
       return await getRecordDetail(collection, wxContext.OPENID, id);
     case 'deleteRecord':
@@ -30,11 +39,22 @@ exports.main = async (event, context) => {
   }
 };
 
+function sanitizeData(data) {
+  return {
+    content: data.content || '',
+    image_urls: Array.isArray(data.image_urls) ? data.image_urls : [],
+    voice_urls: Array.isArray(data.voice_urls) ? data.voice_urls : [],
+    location: data.location || null,
+    date_key: data.date_key || '',
+    order: typeof data.order === 'number' ? data.order : 1
+  };
+}
+
 async function createRecord(collection, openid, data) {
   try {
     const now = new Date().toISOString();
     const record = {
-      ...data,
+      ...sanitizeData(data),
       _openid: openid,
       created_at: now,
       updated_at: now
@@ -207,14 +227,13 @@ async function upsertRecord(collection, openid, data) {
   try {
     const now = new Date().toISOString();
     const record = {
-      ...data,
+      ...sanitizeData(data),
       _openid: openid,
       updated_at: now
     };
 
-    if (record._id) {
-      const { _id } = record;
-      delete record._id;
+    if (data._id) {
+      const _id = data._id;
 
       await db.collection(collection)
         .where({ _id, _openid: openid })

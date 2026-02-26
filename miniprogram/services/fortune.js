@@ -1,8 +1,8 @@
 import { callFunction } from '../utils/cloud.js';
-import { COLLECTIONS, FUNCTION_TYPES } from '../utils/constants.js';
+import { COLLECTIONS, FUNCTION_TYPES, CLOUD_FUNCTIONS } from '../utils/constants.js';
 
 export const createFortuneRecord = (data) => {
-  return callFunction('happiness', {
+  return callFunction(CLOUD_FUNCTIONS.HAPPINESS, {
     type: FUNCTION_TYPES.FORTUNE_CREATE,
     collection: COLLECTIONS.FORTUNE_RECORDS,
     data
@@ -10,7 +10,7 @@ export const createFortuneRecord = (data) => {
 };
 
 export const getFortuneRecords = (page = 1, limit = 10) => {
-  return callFunction('happiness', {
+  return callFunction(CLOUD_FUNCTIONS.HAPPINESS, {
     type: FUNCTION_TYPES.FORTUNE_LIST,
     collection: COLLECTIONS.FORTUNE_RECORDS,
     page,
@@ -19,9 +19,17 @@ export const getFortuneRecords = (page = 1, limit = 10) => {
 };
 
 export const upsertFortuneRecord = (data) => {
-  return callFunction('happiness', {
+  return callFunction(CLOUD_FUNCTIONS.HAPPINESS, {
     type: FUNCTION_TYPES.FORTUNE_UPSERT,
     collection: COLLECTIONS.FORTUNE_RECORDS,
     data
+  });
+};
+
+export const deleteFortuneRecord = (id) => {
+  return callFunction(CLOUD_FUNCTIONS.HAPPINESS, {
+    type: FUNCTION_TYPES.FORTUNE_DELETE,
+    collection: COLLECTIONS.FORTUNE_RECORDS,
+    id
   });
 };

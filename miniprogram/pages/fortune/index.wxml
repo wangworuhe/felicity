@@ -1,69 +1,117 @@
 <view class="container">
-  <view class="input-card">
-    <textarea
-      class="reflection-input"
-      placeholder="写下今天的一点反思..."
-      maxlength="500"
-      auto-height="true"
-      focus="{{inputFocus}}"
-      value="{{inputValue}}"
-      bindinput="onInputChange"
-      bindfocus="onInputFocus"
-      bindblur="onInputBlur"
-    />
-
-    <view class="actions">
-      <button class="save-btn" bindtap="onSave">保存</button>
+  <!-- 表单卡片 -->
+  <view class="card-item">
+    <view class="card-header">
+      <text class="card-title">今日反思</text>
+    </view>
+    <view class="input-wrapper {{inputFocus ? 'focused' : ''}}">
+      <view class="input-box {{inputFocus ? 'focused' : ''}}">
+        <textarea
+          class="content-input"
+          placeholder="写下今天的一点反思..."
+          placeholder-class="placeholder"
+          value="{{inputValue}}"
+          bindinput="onInputChange"
+          bindfocus="onInputFocus"
+          bindblur="onInputBlur"
+          maxlength="500"
+          show-confirm-bar="{{false}}"
+          auto-height
+        />
+        <view class="char-count">
+          <text>{{inputValue.length}}</text>
+        </view>
+      </view>
+      <view class="input-toolbar">
+        <view></view>
+        <button
+          class="submit-btn {{inputValue ? 'active' : ''}}"
+          bindtap="onSave"
+          size="mini"
+          disabled="{{!inputValue || saving}}"
+          loading="{{saving}}"
+        >
+          {{saving ? '保存中...' : '保存'}}
+        </button>
+      </view>
     </view>
   </view>
 
-  <view class="section-title">历史记录</view>
+  <!-- 历史记录 -->
+  <view class="records-section">
+    <view class="section-header">
+      <text class="section-title">历史记录</text>
+    </view>
 
-  <view class="empty" wx:if="{{records.length === 0 && !loading}}">
-    <text class="empty-text">还没有记录，从今天开始写一条吧</text>
-  </view>
+    <view class="empty" wx:if="{{records.length === 0 && !loading}}">
+      <text class="empty-text">还没有记录，从今天开始写一条吧</text>
+    </view>
 
-  <view class="list" wx:if="{{records.length > 0}}">
-    <view
-      class="record-card"
-      wx:for="{{records}}"
-      wx:key="_id"
-    >
-      <view class="record-header">
-        <text class="record-time">{{item.created_at}}</text>
-        <text class="record-edit-hint" wx:if="{{!item.isEditing}}" bindtap="onEditTap" data-index="{{index}}">编辑</text>
-      </view>
+    <view class="list" wx:if="{{records.length > 0}}">
+      <view class="record-card" wx:for="{{records}}" wx:key="_id">
+        <view class="card-header">
+          <text class="card-time">{{item.created_at}}</text>
+          <view class="card-header-right">
+            <view class="more-btn" catchtap="onRecordAction" data-index="{{index}}">
+              <text class="more-dots">···</text>
+            </view>
+          </view>
+        </view>
 
-      <view class="record-content" wx:if="{{!item.isEditing}}">
-        <text class="record-text">{{item.content}}</text>
-      </view>
-
-      <view class="record-edit" wx:if="{{item.isEditing}}">
-        <textarea
-          class="edit-textarea"
-          value="{{item.editValue}}"
-          auto-height="true"
-          maxlength="500"
-          bindinput="onEditInput"
-          data-index="{{index}}"
-        />
-        <view class="edit-actions">
-          <button class="edit-cancel-btn" bindtap="onCancelEdit" data-index="{{index}}">取消</button>
-          <button class="edit-save-btn" bindtap="onSaveEdit" data-index="{{index}}" data-id="{{item._id}}">保存</button>
+        <view class="card-content">
+          <view class="content-text-wrap {{item._needCollapse && !item._expanded ? 'collapsed' : ''}}">
+            <text class="content-text">{{item.content}}</text>
+          </view>
+          <view class="expand-btn" wx:if="{{item._needCollapse && !item._expanded}}" catchtap="toggleExpand" data-index="{{index}}">
+            <text class="expand-text">展开</text>
+          </view>
+          <view class="expand-btn" wx:if="{{item._needCollapse && item._expanded}}" catchtap="toggleExpand" data-index="{{index}}">
+            <text class="expand-text">收起</text>
+          </view>
         </view>
       </view>
     </view>
+
+    <view class="load-more" wx:if="{{hasMore && records.length > 0}}">
+      <text>{{loading ? '加载中...' : '上拉加载更多'}}</text>
+    </view>
+
+    <view class="footer-tip" wx:if="{{!hasMore && records.length > 0}}">
+      <text>没有更多记录了</text>
+    </view>
   </view>
 
-  <view class="load-more" wx:if="{{hasMore && records.length > 0}}">
-    <text>{{loading ? '加载中...' : '加载更多'}}</text>
+  <!-- 操作弹窗 -->
+  <view class="popup-mask" wx:if="{{actionPopup.visible}}" catchtap="closeActionPopup"></view>
+  <view
+    class="action-popup"
+    wx:if="{{actionPopup.visible}}"
+    style="top: {{actionPopup.y}}px; right: {{actionPopup.right}}px;"
+    catchtap="noop"
+  >
+    <view class="popup-item" catchtap="onPopupEdit">
+      <text class="popup-item-text">编辑</text>
+    </view>
+    <view class="popup-item" catchtap="onPopupCopy">
+      <text class="popup-item-text">复制</text>
+    </view>
+    <view class="popup-divider"></view>
+    <view class="popup-item" catchtap="onPopupDelete">
+      <text class="popup-item-text delete">删除</text>
+    </view>
   </view>
 
-  <view class="footer-tip" wx:if="{{!hasMore && records.length > 0}}">
-    <text>没有更多记录了</text>
-  </view>
-
+  <!-- 回到顶部 -->
   <view class="back-top" wx:if="{{showBackTop}}" bindtap="onBackTop">
     <text class="back-top-icon">↑</text>
   </view>
+
+  <!-- 编辑弹窗 -->
+  <edit-modal
+    visible="{{editModalVisible}}"
+    record="{{editModalRecord}}"
+    recordType="fortune"
+    bind:save="onEditSave"
+    bind:close="onEditClose"
+  />
 </view>

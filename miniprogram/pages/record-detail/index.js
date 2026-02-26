@@ -1,6 +1,7 @@
 const { getHappinessRecordDetail, deleteHappinessRecord, upsertHappinessRecord } = require('../../services/happiness.js');
 const { showLoading, hideLoading, showToast, showSuccess, showError } = require('../../utils/toast.js');
 const { TOAST_MESSAGES } = require('../../utils/constants.js');
+const { formatDate } = require('../../utils/date.js');
 
 Page({
   data: {
@@ -33,12 +34,15 @@ Page({
       const result = await getHappinessRecordDetail(this.data.id);
       
       if (result.code === 0) {
+        const r = result.data;
         this.setData({
           record: {
-            ...result.data,
-            created_at: this.formatDate(result.data.created_at)
+            ...r,
+            image_urls: Array.isArray(r.image_urls) ? r.image_urls : (r.image_url ? [r.image_url] : []),
+            voice_urls: Array.isArray(r.voice_urls) ? r.voice_urls : [],
+            created_at: formatDate(r.created_at, { includeSeconds: true })
           },
-          editContent: result.data.content || '',
+          editContent: r.content || '',
           loading: false
         });
       } else {
@@ -58,14 +62,14 @@ Page({
     }
   },
 
-  onPreviewImage() {
-    const { image_url } = this.data.record;
-    if (image_url) {
-      wx.previewImage({
-        urls: [image_url],
-        current: image_url
-      });
-    }
+  onPreviewImage(e) {
+    const record = this.data.record;
+    if (!record || !record.image_urls || !record.image_urls.length) return;
+    const current = (e && e.currentTarget && e.currentTarget.dataset.url) || record.image_urls[0];
+    wx.previewImage({
+      urls: record.image_urls,
+      current
+    });
   },
 
   onShare() {
@@ -92,24 +96,21 @@ Page({
 
   async deleteRecord() {
     showLoading('删除中...');
-    
     try {
       const result = await deleteHappinessRecord(this.data.id);
-      
       if (result.code === 0) {
-        hideLoading();
         showSuccess(TOAST_MESSAGES.RECORD_DELETE_SUCCESS);
         setTimeout(() => {
           wx.navigateBack();
         }, 1500);
       } else {
-        hideLoading();
         showToast(result.message || TOAST_MESSAGES.RECORD_DELETE_FAILED);
       }
     } catch (error) {
       console.error('删除记录失败:', error);
-      hideLoading();
       showToast(TOAST_MESSAGES.RECORD_DELETE_FAILED);
+    } finally {
+      hideLoading();
     }
   },
 
@@ -161,18 +162,4 @@ Page({
     }
   },
 
-  formatDate(isoString) {
-    const date = new Date(isoString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hour = String(date.getHours()).padStart(2, '0');
-    const minute = String(date.getMinutes()).padStart(2, '0');
-    const second = String(date.getSeconds()).padStart(2, '0');
-    
-    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-    const weekDay = weekDays[date.getDay()];
-    
-    return `${year}年${month}月${day}日 ${weekDay} ${hour}:${minute}:${second}`;
-  }
 });

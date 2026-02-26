@@ -1,5 +1,6 @@
 const { getRandomHappinessRecord } = require('../../services/happiness.js');
 const { showLoading, hideLoading, showToast } = require('../../utils/toast.js');
+const { formatDate } = require('../../utils/date.js');
 
 Page({
   data: {
@@ -18,10 +19,12 @@ Page({
       const result = await getRandomHappinessRecord();
       
       if (result.code === 0 && result.data) {
+        const r = result.data;
         this.setData({
           record: {
-            ...result.data,
-            created_at: this.formatDate(result.data.created_at)
+            ...r,
+            image_urls: Array.isArray(r.image_urls) ? r.image_urls : (r.image_url ? [r.image_url] : []),
+            created_at: formatDate(r.created_at, { includeSeconds: true })
           },
           loading: false
         });
@@ -53,14 +56,14 @@ Page({
     }
   },
 
-  onPreviewImage() {
-    const { image_url } = this.data.record;
-    if (image_url) {
-      wx.previewImage({
-        urls: [image_url],
-        current: image_url
-      });
-    }
+  onPreviewImage(e) {
+    const record = this.data.record;
+    if (!record || !record.image_urls || !record.image_urls.length) return;
+    const current = (e && e.currentTarget && e.currentTarget.dataset.url) || record.image_urls[0];
+    wx.previewImage({
+      urls: record.image_urls,
+      current
+    });
   },
 
   goToHome() {
@@ -69,18 +72,4 @@ Page({
     });
   },
 
-  formatDate(isoString) {
-    const date = new Date(isoString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hour = String(date.getHours()).padStart(2, '0');
-    const minute = String(date.getMinutes()).padStart(2, '0');
-    const second = String(date.getSeconds()).padStart(2, '0');
-    
-    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-    const weekDay = weekDays[date.getDay()];
-    
-    return `${year}年${month}月${day}日 ${weekDay} ${hour}:${minute}:${second}`;
-  }
 });

@@ -1,8 +1,8 @@
 {
   "navigationBarTitleText": "幸福时刻",
-  "navigationBarBackgroundColor": "#BFE7FF",
+  "navigationBarBackgroundColor": "#FFFFFF",
   "navigationBarTextStyle": "black",
-  "backgroundColor": "#EAF7FF",
+  "backgroundColor": "#FFFFFF",
   "enablePullDownRefresh": true,
   "onReachBottomDistance": 50,
   "usingComponents": {

@@ -17,7 +17,7 @@
       show-confirm-bar="{{false}}"
     />
 
-    <view class="media-section" wx:if="{{imageUrls.length}}">
+    <view class="media-section" wx:if="{{showMediaTools && imageUrls.length}}">
       <view class="media-label">图片</view>
       <view class="image-list">
         <view class="image-item" wx:for="{{imageUrls}}" wx:key="index">
@@ -33,23 +33,26 @@
       </view>
     </view>
 
-    <view class="media-section" wx:if="{{voiceUrls.length}}">
+    <view class="media-section" wx:if="{{showMediaTools && voiceUrls.length}}">
       <view class="media-label">语音</view>
       <view class="voice-list">
         <view class="voice-item" wx:for="{{voiceUrls}}" wx:key="index">
-          <text class="voice-text">语音 {{index + 1}}</text>
+          <view class="voice-play-area" catchtap="onPlayVoice" data-index="{{index}}">
+            <text class="voice-play-icon">{{playingVoiceKey === 'edit-' + index ? '⏸' : '▶'}}</text>
+            <text class="voice-text">语音 {{index + 1}}</text>
+          </view>
           <text class="remove-btn" catchtap="onRemoveVoice" data-index="{{index}}">×</text>
         </view>
       </view>
     </view>
 
-    <view class="recording-tip" wx:if="{{isRecording}}">
-      <text>正在录音 {{recordingTime}}s，松开结束</text>
+    <view class="recording-tip" wx:if="{{showMediaTools && isRecording}}">
+      <text>正在录音 {{recordingTime}}s，点击停止</text>
     </view>
   </scroll-view>
 
   <view class="modal-footer">
-    <view class="toolbar">
+    <view class="toolbar" wx:if="{{showMediaTools}}">
       <view
         class="tool-btn {{imageUrls.length ? 'has-media' : ''}}"
         bindtap="onChooseImage"
@@ -58,11 +61,9 @@
       </view>
       <view
         class="tool-btn {{isRecording ? 'recording' : ''}}"
-        bindtouchstart="onVoiceStart"
-        bindtouchend="onVoiceEnd"
-        bindtouchcancel="onVoiceCancel"
+        bindtap="onVoiceToggle"
       >
-        <text class="tool-label">{{isRecording ? '录音中' : '语音'}}</text>
+        <text class="tool-label">{{isRecording ? '停止录音' : '语音'}}</text>
       </view>
     </view>
     <button

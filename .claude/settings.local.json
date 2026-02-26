@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "WebFetch(domain:www.jianshu.com)",
+      "WebFetch(domain:www.mj.org.cn)"
+    ]
+  }
+}

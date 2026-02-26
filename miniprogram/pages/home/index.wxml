@@ -51,13 +51,11 @@
 
               <view
                 class="tool-btn voice-btn {{isRecording && recordingCardIndex === cardIndex ? 'recording' : ''}}"
-                bindtouchstart="onVoiceStart"
-                bindtouchend="onVoiceEnd"
-                bindtouchcancel="onVoiceCancel"
+                bindtap="onVoiceToggle"
                 data-index="{{cardIndex}}"
               >
                 <view class="tool-icon-dot"></view>
-                <text class="tool-label">{{isRecording && recordingCardIndex === cardIndex ? '录音中' : '语音'}}</text>
+                <text class="tool-label">{{isRecording && recordingCardIndex === cardIndex ? '停止录音' : '语音'}}</text>
               </view>
             </view>
             <button
@@ -75,12 +73,15 @@
 
 
         <view class="recording-tip" wx:if="{{isRecording && recordingCardIndex === cardIndex}}">
-          <text>正在录音 {{recordingTime}}s，松开结束</text>
+          <text>正在录音 {{recordingTime}}s，点击停止</text>
         </view>
 
         <view class="voice-preview" wx:if="{{card.voiceUrls.length}}">
           <view class="voice-item" wx:for="{{card.voiceUrls}}" wx:for-item="voice" wx:for-index="voiceIndex" wx:key="voiceIndex">
-            <text class="voice-text">语音 {{voiceIndex + 1}}</text>
+            <view class="voice-play-area" bindtap="onPlayVoice" data-index="{{cardIndex}}" data-voice-index="{{voiceIndex}}">
+              <text class="voice-play-icon">{{playingVoiceKey === 'card-' + cardIndex + '-' + voiceIndex ? '⏸' : '▶'}}</text>
+              <text class="voice-text">语音 {{voiceIndex + 1}}</text>
+            </view>
             <text class="voice-remove" bindtap="onRemoveVoice" data-index="{{cardIndex}}" data-voice-index="{{voiceIndex}}">×</text>
           </view>
         </view>
@@ -94,7 +95,7 @@
 
 
         <view class="location-group" wx:if="{{location}}">
-          <text class="location-text">{{location.name || '未知位置'}}</text>
+          <text class="location-text">已定位</text>
         </view>
 
       </view>
@@ -125,8 +126,8 @@
         <view class="card-header">
           <text class="card-time">{{item.created_at}}</text>
           <view class="card-header-right">
-            <text class="card-location" wx:if="{{item.location && item.location.name}}">
-              {{item.location.name}}
+            <text class="card-location" wx:if="{{item.location}}">
+              已定位
             </text>
             <view class="more-btn" catchtap="onRecordAction" data-index="{{index}}">
               <text class="more-dots">···</text>
@@ -146,9 +147,20 @@
           </view>
         </view>
 
-        <view class="card-image" wx:if="{{item.image_url}}">
+        <view class="record-voice-list" wx:if="{{item.voice_urls.length}}">
+          <view class="record-voice-item" wx:for="{{item.voice_urls}}" wx:for-item="voiceUrl" wx:for-index="voiceIdx" wx:key="voiceIdx"
+            bindtap="onPlayRecordVoice" data-record-index="{{index}}" data-voice-index="{{voiceIdx}}">
+            <text class="voice-play-icon">{{playingVoiceKey === 'record-' + index + '-' + voiceIdx ? '⏸' : '▶'}}</text>
+            <text class="voice-text">语音 {{voiceIdx + 1}}</text>
+          </view>
+        </view>
+
+        <view class="card-images" wx:if="{{item.image_urls.length}}">
           <image
-            src="{{item.image_url}}"
+            wx:for="{{item.image_urls}}"
+            wx:for-item="imgUrl"
+            wx:key="*this"
+            src="{{imgUrl}}"
             mode="aspectFill"
             class="card-img"
           />
@@ -214,18 +226,21 @@
             <text class="content-text">{{randomRecord.content}}</text>
           </view>
 
-          <view class="card-image" wx:if="{{randomRecord.image_url}}">
+          <view class="card-images" wx:if="{{randomRecord.image_urls.length}}">
             <image
-              src="{{randomRecord.image_url}}"
+              wx:for="{{randomRecord.image_urls}}"
+              wx:key="*this"
+              src="{{item}}"
               mode="aspectFill"
               class="record-img"
               bindtap="onPreviewRandomImage"
+              data-url="{{item}}"
             />
           </view>
 
-          <view class="card-location" wx:if="{{randomRecord.location && randomRecord.location.name}}">
+          <view class="card-location" wx:if="{{randomRecord.location}}">
             <text class="location-label">位置</text>
-            <text class="location-text">{{randomRecord.location.name}}</text>
+            <text class="location-text">已定位</text>
           </view>
         </view>
       </view>

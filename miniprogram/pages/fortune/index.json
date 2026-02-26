@@ -1,6 +1,10 @@
 {
   "navigationBarTitleText": "今日反思",
-  "navigationBarBackgroundColor": "#FFF8E7",
+  "navigationBarBackgroundColor": "#FFFFFF",
   "navigationBarTextStyle": "black",
-  "backgroundColor": "#FFF8E7"
+  "backgroundColor": "#FFFFFF",
+  "onReachBottomDistance": 50,
+  "usingComponents": {
+    "edit-modal": "/components/editModal/index"
+  }
 }

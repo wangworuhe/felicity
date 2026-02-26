@@ -15,13 +15,7 @@ const getCloudEnv = () => {
 /**
  * 检查云环境是否配置
  */
-const checkCloudEnv = () => {
-  const env = getCloudEnv();
-  if (!env) {
-    return false;
-  }
-  return true;
-};
+const checkCloudEnv = () => !!getCloudEnv();
 
 /**
  * 云环境未配置提示
@@ -60,11 +54,9 @@ export const callFunction = (name, data, options = {}) => {
         data,
       })
       .then((resp) => {
-        if (resp.result && resp.result.success) {
-          resolve(resp.result);
-        } else {
-          resolve(resp.result || resp);
-        }
+        // 统一 resolve，页面层通过 result.code 判断业务成功/失败
+        // 仅网络错误/函数不存在等异常走 reject
+        resolve(resp.result || resp);
       })
       .catch((e) => {
         const { errCode, errMsg } = e;
@@ -126,8 +118,6 @@ export const uploadFile = (cloudPath, filePath) => {
  */
 export const chooseAndUploadImage = (count = 1) => {
   return new Promise((resolve, reject) => {
-    showLoading();
-
     wx.chooseMedia({
       count,
       mediaType: ['image'],
@@ -136,15 +126,10 @@ export const chooseAndUploadImage = (count = 1) => {
         const cloudPath = `image-${Date.now()}.${file.tempFilePath.split('.').pop()}`;
 
         uploadFile(cloudPath, file.tempFilePath)
-          .then((res) => {
-            resolve(res);
-          })
+          .then(resolve)
           .catch(reject);
       },
       fail: reject,
-      complete: () => {
-        hideLoading();
-      },
     });
   });
 };
@@ -164,4 +149,27 @@ export const deleteFile = (fileList) => {
       })
       .catch(reject);
   });
+};
+
+/**
+ * 上传图片到云存储
+ * @param {string} filePath - 本地文件路径
+ * @param {string} prefix - 云存储路径前缀，默认 'happiness'
+ * @returns {Promise<string>} 云文件ID
+ */
+export const uploadImageToCloud = async (filePath, prefix = 'happiness') => {
+  const cloudPath = `${prefix}/${Date.now()}-${Math.random().toString(16).slice(2)}.jpg`;
+  const result = await uploadFile(cloudPath, filePath);
+  return result.fileID;
+};
+
+/**
+ * 上传语音到云存储
+ * @param {string} filePath - 本地文件路径
+ * @returns {Promise<string>} 云文件ID
+ */
+export const uploadVoiceToCloud = async (filePath) => {
+  const cloudPath = `voice/${Date.now()}-${Math.random().toString(16).slice(2)}.mp3`;
+  const result = await uploadFile(cloudPath, filePath);
+  return result.fileID;
 };

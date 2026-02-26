@@ -3,8 +3,8 @@
   <view class="record-card">
     <view class="card-header">
       <text class="record-time">{{record.created_at}}</text>
-      <text class="record-location" wx:if="{{record.location && record.location.name}}">
-        📍 {{record.location.name}}
+      <text class="record-location" wx:if="{{record.location}}">
+        📍 已定位
       </text>
     </view>
 
@@ -22,12 +22,15 @@
       <text wx:else class="content-text">{{record.content}}</text>
     </view>
 
-    <view class="card-image" wx:if="{{record.image_url}}">
-      <image 
-        src="{{record.image_url}}" 
-        mode="aspectFill" 
+    <view class="card-images" wx:if="{{record.image_urls.length}}">
+      <image
+        wx:for="{{record.image_urls}}"
+        wx:key="*this"
+        src="{{item}}"
+        mode="aspectFill"
         class="record-img"
         bindtap="onPreviewImage"
+        data-url="{{item}}"
       />
     </view>
   </view>

@@ -7,6 +7,8 @@ const {
 } = require('../../services/happiness.js');
 const { showLoading, hideLoading, showToast, showSuccess } = require('../../utils/toast.js');
 const { TOAST_MESSAGES } = require('../../utils/constants.js');
+const { formatDate } = require('../../utils/date.js');
+const { uploadImageToCloud, uploadVoiceToCloud } = require('../../utils/cloud.js');
 
 Page({
   data: {
@@ -22,6 +24,7 @@ Page({
     recordingCardIndex: -1,
     recordingTime: 0,
     recordingTimer: null,
+    playingVoiceKey: '',
     formMinHeightPx: 0,
     records: [],
     page: 1,
@@ -304,15 +307,16 @@ Page({
       return;
     }
 
-    wx.chooseImage({
+    wx.chooseMedia({
       count: remaining,
+      mediaType: ['image'],
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
       success: async (res) => {
         showLoading(TOAST_MESSAGES.IMAGE_UPLOADING);
         try {
           const uploads = await Promise.all(
-            res.tempFilePaths.map(filePath => this.uploadImageToCloud(filePath))
+            res.tempFiles.map(file => uploadImageToCloud(file.tempFilePath))
           );
           const imageUrls = target.imageUrls.concat(uploads);
           this.updateCard(index, { imageUrls });
@@ -324,15 +328,6 @@ Page({
         }
       }
     });
-  },
-
-  async uploadImageToCloud(filePath) {
-    const cloudPath = `happiness/${Date.now()}-${Math.random().toString(16).slice(2)}.jpg`;
-    const result = await wx.cloud.uploadFile({
-      cloudPath,
-      filePath
-    });
-    return result.fileID;
   },
 
   onRemoveImage(e) {
@@ -357,7 +352,7 @@ Page({
       if (index < 0 || !res.tempFilePath) return;
       showLoading('上传中...');
       try {
-        const fileId = await this.uploadVoiceToCloud(res.tempFilePath);
+        const fileId = await uploadVoiceToCloud(res.tempFilePath);
         const target = this.data.cards[index];
         const voiceUrls = target.voiceUrls.concat(fileId);
         this.updateCard(index, { voiceUrls });
@@ -370,11 +365,19 @@ Page({
     });
   },
 
-  onVoiceStart(e) {
+  onVoiceToggle(e) {
     const index = Number(e.currentTarget.dataset.index);
-    const { cards, maxVoices, isRecording } = this.data;
+    const { cards, maxVoices, isRecording, recordingCardIndex } = this.data;
+
+    if (isRecording) {
+      if (recordingCardIndex === index && this.recorderManager) {
+        this.recorderManager.stop();
+      }
+      return;
+    }
+
     const target = cards[index];
-    if (!target || isRecording) return;
+    if (!target) return;
 
     if (target.voiceUrls.length >= maxVoices) {
       showToast('最多录制3段语音');
@@ -412,27 +415,52 @@ Page({
     });
   },
 
-  onVoiceEnd() {
-    if (this.recorderManager) {
-      this.recorderManager.stop();
-    }
-  },
-
-  onVoiceCancel() {
-    if (this.recorderManager) {
-      this.recorderManager.stop();
-    }
-    clearInterval(this.data.recordingTimer);
-    this.setData({ isRecording: false, recordingTime: 0, recordingTimer: null });
-  },
-
-  async uploadVoiceToCloud(filePath) {
-    const cloudPath = `voice/${Date.now()}-${Math.random().toString(16).slice(2)}.mp3`;
-    const result = await wx.cloud.uploadFile({
-      cloudPath,
-      filePath
+  initAudioContext() {
+    if (this.innerAudioContext) return;
+    this.innerAudioContext = wx.createInnerAudioContext();
+    this.innerAudioContext.obeyMuteSwitch = false;
+    this.innerAudioContext.onEnded(() => {
+      this.setData({ playingVoiceKey: '' });
     });
-    return result.fileID;
+    this.innerAudioContext.onError((err) => {
+      console.error('音频播放错误:', err);
+      this.setData({ playingVoiceKey: '' });
+      showToast('播放失败');
+    });
+  },
+
+  onPlayVoice(e) {
+    const cardIndex = Number(e.currentTarget.dataset.index);
+    const voiceIndex = Number(e.currentTarget.dataset.voiceIndex);
+    const key = `card-${cardIndex}-${voiceIndex}`;
+    this._playVoice(key, this.data.cards[cardIndex].voiceUrls[voiceIndex]);
+  },
+
+  onPlayRecordVoice(e) {
+    const recordIndex = Number(e.currentTarget.dataset.recordIndex);
+    const voiceIndex = Number(e.currentTarget.dataset.voiceIndex);
+    const key = `record-${recordIndex}-${voiceIndex}`;
+    const record = this.data.records[recordIndex];
+    if (!record) return;
+    const voiceUrls = record.voice_urls || [];
+    this._playVoice(key, voiceUrls[voiceIndex]);
+  },
+
+  _playVoice(key, fileId) {
+    this.initAudioContext();
+
+    if (this.data.playingVoiceKey === key) {
+      this.innerAudioContext.stop();
+      this.setData({ playingVoiceKey: '' });
+      return;
+    }
+
+    if (!fileId) return;
+
+    this.innerAudioContext.stop();
+    this.innerAudioContext.src = fileId;
+    this.innerAudioContext.play();
+    this.setData({ playingVoiceKey: key });
   },
 
   onRemoveVoice(e) {
@@ -500,8 +528,9 @@ Page({
       if (result.code === 0) {
         const records = result.data.map(record => ({
           ...record,
-          image_url: record.image_url || (Array.isArray(record.image_urls) ? record.image_urls[0] : ''),
-          created_at: this.formatDate(record.created_at, true),
+          image_urls: Array.isArray(record.image_urls) ? record.image_urls : (record.image_url ? [record.image_url] : []),
+          voice_urls: Array.isArray(record.voice_urls) ? record.voice_urls : [],
+          created_at: formatDate(record.created_at, { includeYear: true }),
           _needCollapse: false,
           _expanded: false
         }));
@@ -516,6 +545,9 @@ Page({
     } catch (error) {
       console.error('加载记录失败:', error);
       showToast('加载失败');
+      if (this.data.page === 1) {
+        this.setData({ records: [] });
+      }
     } finally {
       this.setData({ loadingRecords: false });
       callback && callback();
@@ -662,24 +694,6 @@ Page({
     });
   },
 
-  formatDate(isoString, includeYear = false) {
-    const date = new Date(isoString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hour = String(date.getHours()).padStart(2, '0');
-    const minute = String(date.getMinutes()).padStart(2, '0');
-
-    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-    const weekDay = weekDays[date.getDay()];
-
-    if (includeYear) {
-      return `${year}年${month}月${day}日 ${weekDay} ${hour}:${minute}`;
-    }
-
-    return `${month}月${day}日 ${weekDay} ${hour}:${minute}`;
-  },
-
   openRandomModal() {
     this.setData({ showRandomModal: true }, () => {
       this.loadRandomRecord();
@@ -697,10 +711,12 @@ Page({
       const result = await getRandomHappinessRecord();
 
       if (result.code === 0 && result.data) {
+        const r = result.data;
         this.setData({
           randomRecord: {
-            ...result.data,
-            created_at: this.formatDate(result.data.created_at)
+            ...r,
+            image_urls: Array.isArray(r.image_urls) ? r.image_urls : (r.image_url ? [r.image_url] : []),
+            created_at: formatDate(r.created_at)
           }
         });
       } else {
@@ -744,30 +760,24 @@ Page({
     }
   },
 
-  onPreviewRandomImage() {
+  onPreviewRandomImage(e) {
     const { randomRecord } = this.data;
-    if (randomRecord && randomRecord.image_url) {
-      wx.previewImage({
-        urls: [randomRecord.image_url],
-        current: randomRecord.image_url
-      });
-    }
+    if (!randomRecord || !randomRecord.image_urls || !randomRecord.image_urls.length) return;
+    const current = (e && e.currentTarget && e.currentTarget.dataset.url) || randomRecord.image_urls[0];
+    wx.previewImage({
+      urls: randomRecord.image_urls,
+      current
+    });
   },
 
   getLocation() {
     wx.getLocation({
       type: 'gcj02',
       success: (res) => {
-        const { latitude, longitude } = res;
-        wx.getLocation({
-          type: 'wgs84',
-          success: () => {
-            this.setData({
-              location: {
-                latitude,
-                longitude
-              }
-            });
+        this.setData({
+          location: {
+            latitude: res.latitude,
+            longitude: res.longitude
           }
         });
       },
@@ -793,6 +803,10 @@ Page({
     clearInterval(this.data.recordingTimer);
     if (this.recorderManager) {
       this.recorderManager.stop();
+    }
+    if (this.innerAudioContext) {
+      this.innerAudioContext.destroy();
+      this.innerAudioContext = null;
     }
     if (this.draftTimer) {
       clearTimeout(this.draftTimer);

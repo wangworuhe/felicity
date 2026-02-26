@@ -120,6 +120,18 @@
   border-radius: 8px;
 }
 
+.voice-play-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.voice-play-icon {
+  font-size: 14px;
+  color: #FF8C00;
+}
+
 .voice-text {
   font-size: 14px;
   color: #666;
