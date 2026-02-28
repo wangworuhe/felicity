@@ -1,0 +1,23 @@
+<view class="legal-page">
+  <view class="header">
+    <text class="title">{{legal.APP_NAME}}第三方共享清单</text>
+    <text class="meta">更新日期：{{legal.UPDATED_DATE}}</text>
+    <text class="meta">版本：{{legal.VERSION}}</text>
+  </view>
+
+  <view class="card" wx:for="{{list}}" wx:key="name">
+    <text class="name">{{item.name}}</text>
+    <view class="row">
+      <text class="label">使用目的</text>
+      <text class="value">{{item.purpose}}</text>
+    </view>
+    <view class="row">
+      <text class="label">信息类型</text>
+      <text class="value">{{item.types}}</text>
+    </view>
+    <view class="row">
+      <text class="label">隐私政策</text>
+      <text class="value link">{{item.policy}}</text>
+    </view>
+  </view>
+</view>

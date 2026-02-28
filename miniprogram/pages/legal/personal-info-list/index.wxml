@@ -1,0 +1,26 @@
+<view class="legal-page">
+  <view class="header">
+    <text class="title">{{legal.APP_NAME}}个人信息收集清单</text>
+    <text class="meta">更新日期：{{legal.UPDATED_DATE}}</text>
+    <text class="meta">版本：{{legal.VERSION}}</text>
+  </view>
+
+  <view class="card" wx:for="{{list}}" wx:key="name">
+    <view class="row">
+      <text class="label">信息类型</text>
+      <text class="value">{{item.name}}</text>
+    </view>
+    <view class="row">
+      <text class="label">使用目的</text>
+      <text class="value">{{item.purpose}}</text>
+    </view>
+    <view class="row">
+      <text class="label">使用场景</text>
+      <text class="value">{{item.scene}}</text>
+    </view>
+    <view class="row">
+      <text class="label">保存期限</text>
+      <text class="value">{{item.retention}}</text>
+    </view>
+  </view>
+</view>

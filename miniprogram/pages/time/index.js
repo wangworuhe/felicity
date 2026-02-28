@@ -6,6 +6,7 @@ const {
 } = require('../../services/diary.js');
 const { showLoading, hideLoading, showToast, showSuccess } = require('../../utils/toast.js');
 const { TOAST_MESSAGES, DIARY_PRESET_TAGS } = require('../../utils/constants.js');
+const { ensurePrivacyAuthorized } = require('../../utils/privacy.js');
 const { uploadVoiceToCloud } = require('../../utils/cloud.js');
 
 Page({
@@ -278,15 +279,18 @@ Page({
 
   // === 语音（原生录音，语音转文字后续迭代） ===
 
-  onVoiceToggle() {
+  async onVoiceToggle() {
     if (this.data.isRecording) {
       this._stopRecording();
     } else {
-      this._startRecording();
+      await this._startRecording();
     }
   },
 
-  _startRecording() {
+  async _startRecording() {
+    const privacyOk = await ensurePrivacyAuthorized('time.record');
+    if (!privacyOk) return;
+
     wx.getSetting({
       success: (res) => {
         if (res.authSetting['scope.record'] === false) {

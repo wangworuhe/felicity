@@ -5,3 +5,4 @@ export * from './storage.js';
 export * from './happiness.js';
 export * from './fortune.js';
 export * from './diary.js';
+export * from './user.js';

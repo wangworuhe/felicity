@@ -3,6 +3,7 @@ const { upsertFortuneRecord } = require('../../services/fortune.js');
 const { upsertDiaryRecord } = require('../../services/diary.js');
 const { showLoading, hideLoading, showToast, showSuccess } = require('../../utils/toast.js');
 const { TOAST_MESSAGES } = require('../../utils/constants.js');
+const { ensurePrivacyAuthorized } = require('../../utils/privacy.js');
 const { uploadImageToCloud, uploadVoiceToCloud } = require('../../utils/cloud.js');
 
 Component({
@@ -56,13 +57,16 @@ Component({
       this.setData({ editContent: e.detail.value });
     },
 
-    onChooseImage() {
+    async onChooseImage() {
       const { imageUrls, maxImages } = this.data;
       const remaining = maxImages - imageUrls.length;
       if (remaining <= 0) {
         showToast('最多上传3张图片');
         return;
       }
+
+      const privacyOk = await ensurePrivacyAuthorized('editModal.chooseMedia');
+      if (!privacyOk) return;
 
       wx.chooseMedia({
         count: remaining,
@@ -121,7 +125,7 @@ Component({
       });
     },
 
-    onVoiceToggle() {
+    async onVoiceToggle() {
       const { voiceUrls, maxVoices, isRecording } = this.data;
 
       if (isRecording) {
@@ -133,6 +137,9 @@ Component({
         showToast('最多录制3段语音');
         return;
       }
+
+      const privacyOk = await ensurePrivacyAuthorized('editModal.record');
+      if (!privacyOk) return;
 
       wx.getSetting({
         success: (res) => {

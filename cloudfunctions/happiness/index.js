@@ -3,7 +3,8 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
-const ALLOWED_COLLECTIONS = ['happiness_records', 'fortune_records', 'diary_records'];
+const ALLOWED_COLLECTIONS = ['happiness_records', 'fortune_records', 'diary_records', 'user_profiles'];
+const USER_PROFILE_COLLECTION = 'user_profiles';
 
 exports.main = async (event, context) => {
   const { type, collection, data, page, limit, id, dateKey, startDate, endDate } = event;
@@ -33,6 +34,14 @@ exports.main = async (event, context) => {
       return await listRecordsByDateKey(collection, wxContext.OPENID, dateKey);
     case 'listRecordDates':
       return await listRecordDates(collection, wxContext.OPENID, startDate, endDate);
+    case 'getUserProfile':
+      return await getUserProfile(wxContext.OPENID);
+    case 'upsertUserProfile':
+      return await upsertUserProfile(wxContext.OPENID, data || {});
+    case 'getMyDataSummary':
+      return await getMyDataSummary(wxContext.OPENID);
+    case 'deleteMyData':
+      return await deleteMyData(wxContext.OPENID);
     default:
       return {
         code: -1,
@@ -92,7 +101,7 @@ async function createRecord(collection, openid, data) {
     return {
       code: -1,
       message: '记录失败',
-      error: error.message
+      error: '内部错误'
     };
   }
 }
@@ -118,7 +127,7 @@ async function listRecords(collection, openid, page = 1, limit = 10) {
     return {
       code: -1,
       message: '获取记录列表失败',
-      error: error.message
+      error: '内部错误'
     };
   }
 }
@@ -146,7 +155,7 @@ async function getRecordDetail(collection, openid, id) {
     return {
       code: -1,
       message: '获取记录详情失败',
-      error: error.message
+      error: '内部错误'
     };
   }
 }
@@ -173,7 +182,7 @@ async function deleteRecord(collection, openid, id) {
     return {
       code: -1,
       message: '删除记录失败',
-      error: error.message
+      error: '内部错误'
     };
   }
 }
@@ -210,7 +219,7 @@ async function getRandomRecord(collection, openid) {
     return {
       code: -1,
       message: '获取随机记录失败',
-      error: error.message
+      error: '内部错误'
     };
   }
 }
@@ -232,7 +241,7 @@ async function listRecordsByDateKey(collection, openid, dateKey) {
     return {
       code: -1,
       message: '获取记录失败',
-      error: error.message
+      error: '内部错误'
     };
   }
 }
@@ -245,7 +254,7 @@ async function listRecordDates(collection, openid, startDate, endDate) {
         date_key: _.gte(startDate).and(_.lte(endDate))
       })
       .field({ date_key: true })
-      .limit(100)
+      .limit(500)
       .get();
 
     const dates = [...new Set(result.data.map(r => r.date_key))];
@@ -268,9 +277,13 @@ async function upsertRecord(collection, openid, data) {
     if (data._id) {
       const _id = data._id;
 
-      await db.collection(collection)
+      const updateResult = await db.collection(collection)
         .where({ _id, _openid: openid })
         .update({ data: record });
+
+      if (updateResult.stats.updated === 0) {
+        return { code: -1, message: '记录不存在或无权修改' };
+      }
 
       return {
         code: 0,
@@ -318,7 +331,282 @@ async function upsertRecord(collection, openid, data) {
     return {
       code: -1,
       message: '更新记录失败',
-      error: error.message
+      error: '内部错误'
+    };
+  }
+}
+
+function maskOpenId(openid) {
+  if (!openid || openid.length < 8) return openid || '';
+  return `${openid.slice(0, 4)}****${openid.slice(-4)}`;
+}
+
+async function getUserProfile(openid) {
+  try {
+    const result = await db.collection(USER_PROFILE_COLLECTION)
+      .where({ _openid: openid })
+      .limit(1)
+      .get();
+
+    const profile = result.data[0] || null;
+    return {
+      code: 0,
+      message: '获取成功',
+      data: {
+        masked_openid: maskOpenId(openid),
+        nick_name: profile ? (profile.nick_name || '') : '',
+        avatar_url: profile ? (profile.avatar_url || '') : '',
+        created_at: profile ? profile.created_at : '',
+        updated_at: profile ? profile.updated_at : ''
+      }
+    };
+  } catch (error) {
+    console.error('获取用户资料失败:', error);
+    return {
+      code: -1,
+      message: '获取用户资料失败',
+      error: '内部错误'
+    };
+  }
+}
+
+async function upsertUserProfile(openid, data) {
+  try {
+    const now = new Date().toISOString();
+    const nickName = String(data.nick_name || '').trim().slice(0, 20);
+    const avatarUrl = typeof data.avatar_url === 'string' ? data.avatar_url : '';
+
+    const payload = {
+      nick_name: nickName,
+      avatar_url: avatarUrl,
+      updated_at: now
+    };
+
+    const existResult = await db.collection(USER_PROFILE_COLLECTION)
+      .where({ _openid: openid })
+      .limit(1)
+      .get();
+
+    if (existResult.data.length > 0) {
+      const _id = existResult.data[0]._id;
+      await db.collection(USER_PROFILE_COLLECTION)
+        .where({ _id, _openid: openid })
+        .update({ data: payload });
+
+      return {
+        code: 0,
+        message: '更新成功',
+        data: {
+          _id,
+          _openid: openid,
+          masked_openid: maskOpenId(openid),
+          ...payload,
+          created_at: existResult.data[0].created_at || now
+        }
+      };
+    }
+
+    const createData = {
+      ...payload,
+      _openid: openid,
+      created_at: now
+    };
+    const addResult = await db.collection(USER_PROFILE_COLLECTION).add({ data: createData });
+
+    return {
+      code: 0,
+      message: '创建成功',
+      data: {
+        _id: addResult._id,
+        masked_openid: maskOpenId(openid),
+        ...createData
+      }
+    };
+  } catch (error) {
+    console.error('更新用户资料失败:', error);
+    return {
+      code: -1,
+      message: '更新用户资料失败',
+      error: '内部错误'
+    };
+  }
+}
+
+async function getLatestTime(collection, openid) {
+  try {
+    const byUpdated = await db.collection(collection)
+      .where({ _openid: openid })
+      .orderBy('updated_at', 'desc')
+      .limit(1)
+      .get();
+    if (byUpdated.data.length > 0 && byUpdated.data[0].updated_at) {
+      return byUpdated.data[0].updated_at;
+    }
+  } catch (error) {
+    console.warn('按 updated_at 查询最新时间失败:', collection, error);
+  }
+
+  try {
+    const byCreated = await db.collection(collection)
+      .where({ _openid: openid })
+      .orderBy('created_at', 'desc')
+      .limit(1)
+      .get();
+    if (byCreated.data.length > 0 && byCreated.data[0].created_at) {
+      return byCreated.data[0].created_at;
+    }
+  } catch (error) {
+    console.warn('按 created_at 查询最新时间失败:', collection, error);
+  }
+
+  return '';
+}
+
+async function getMyDataSummary(openid) {
+  try {
+    const collections = ['happiness_records', 'fortune_records', 'diary_records'];
+    const counts = {};
+    let total = 0;
+    let latestActiveAt = '';
+
+    for (const name of collections) {
+      const countRes = await db.collection(name).where({ _openid: openid }).count();
+      const totalCount = countRes.total || 0;
+      counts[name] = totalCount;
+      total += totalCount;
+
+      if (totalCount > 0) {
+        const latest = await getLatestTime(name, openid);
+        if (latest && (!latestActiveAt || latest > latestActiveAt)) {
+          latestActiveAt = latest;
+        }
+      }
+    }
+
+    return {
+      code: 0,
+      message: '获取成功',
+      data: {
+        counts,
+        total,
+        latest_active_at: latestActiveAt
+      }
+    };
+  } catch (error) {
+    console.error('获取数据汇总失败:', error);
+    return {
+      code: -1,
+      message: '获取数据汇总失败',
+      error: '内部错误'
+    };
+  }
+}
+
+function collectFileIdsFromRecord(record) {
+  const fileIds = [];
+  const imageUrls = Array.isArray(record.image_urls) ? record.image_urls : [];
+  const voiceUrls = Array.isArray(record.voice_urls) ? record.voice_urls : [];
+  const singleImage = typeof record.image_url === 'string' ? record.image_url : '';
+  const singleVoice = typeof record.voice_url === 'string' ? record.voice_url : '';
+
+  imageUrls.forEach(id => {
+    if (typeof id === 'string' && id) fileIds.push(id);
+  });
+  voiceUrls.forEach(id => {
+    if (typeof id === 'string' && id) fileIds.push(id);
+  });
+  if (singleImage) fileIds.push(singleImage);
+  if (singleVoice) fileIds.push(singleVoice);
+
+  return fileIds;
+}
+
+async function collectRecords(collection, openid) {
+  const all = [];
+  const pageSize = 100;
+  let skip = 0;
+
+  while (true) {
+    const result = await db.collection(collection)
+      .where({ _openid: openid })
+      .skip(skip)
+      .limit(pageSize)
+      .get();
+    const list = result.data || [];
+    all.push(...list);
+    if (list.length < pageSize) break;
+    skip += list.length;
+    if (skip > 5000) break;
+  }
+
+  return all;
+}
+
+async function deleteFilesByChunks(fileIds) {
+  const dedup = [...new Set(fileIds.filter(Boolean))];
+  const failed = [];
+  const chunkSize = 50;
+
+  for (let i = 0; i < dedup.length; i += chunkSize) {
+    const chunk = dedup.slice(i, i + chunkSize);
+    try {
+      await cloud.deleteFile({ fileList: chunk });
+    } catch (error) {
+      console.error('删除云文件失败:', error);
+      failed.push(...chunk);
+    }
+  }
+
+  return {
+    total: dedup.length,
+    failed
+  };
+}
+
+async function deleteMyData(openid) {
+  try {
+    const businessCollections = ['happiness_records', 'fortune_records', 'diary_records'];
+    const allFileIds = [];
+    const removed = {};
+
+    for (const name of businessCollections) {
+      const records = await collectRecords(name, openid);
+      records.forEach(record => {
+        allFileIds.push(...collectFileIdsFromRecord(record));
+      });
+
+      const removeResult = await db.collection(name).where({ _openid: openid }).remove();
+      removed[name] = removeResult.stats.removed || 0;
+    }
+
+    const profileList = await collectRecords(USER_PROFILE_COLLECTION, openid);
+    profileList.forEach((profile) => {
+      if (typeof profile.avatar_url === 'string' && profile.avatar_url) {
+        allFileIds.push(profile.avatar_url);
+      }
+    });
+    const profileRemoveResult = await db.collection(USER_PROFILE_COLLECTION).where({ _openid: openid }).remove();
+    removed[USER_PROFILE_COLLECTION] = profileRemoveResult.stats.removed || 0;
+
+    const fileResult = await deleteFilesByChunks(allFileIds);
+
+    return {
+      code: 0,
+      message: '删除成功',
+      data: {
+        removed,
+        files: {
+          total: fileResult.total,
+          failed: fileResult.failed
+        }
+      }
+    };
+  } catch (error) {
+    console.error('删除用户数据失败:', error);
+    return {
+      code: -1,
+      message: '删除用户数据失败',
+      error: '内部错误'
     };
   }
 }

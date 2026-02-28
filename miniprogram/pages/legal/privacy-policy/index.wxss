@@ -1,0 +1,52 @@
+.legal-page {
+  min-height: 100vh;
+  background: #f7f8fa;
+  padding: 14px 12px 20px;
+  box-sizing: border-box;
+}
+
+.header,
+.section,
+.footer {
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.title {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 6px;
+}
+
+.meta {
+  display: block;
+  font-size: 12px;
+  color: #777;
+  margin-bottom: 2px;
+}
+
+.section-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 6px;
+}
+
+.line {
+  display: block;
+  font-size: 13px;
+  line-height: 1.75;
+  color: #444;
+}
+
+.footer text {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.7;
+}

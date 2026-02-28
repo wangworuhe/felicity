@@ -4,6 +4,10 @@
     "pages/fortune/index",
     "pages/time/index",
     "pages/me/index",
+    "pages/legal/user-agreement/index",
+    "pages/legal/privacy-policy/index",
+    "pages/legal/personal-info-list/index",
+    "pages/legal/third-party-list/index",
     "pages/records/index",
     "pages/record-detail/index",
     "pages/random/index"

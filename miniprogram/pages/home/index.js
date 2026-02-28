@@ -7,6 +7,7 @@ const {
 } = require('../../services/happiness.js');
 const { showLoading, hideLoading, showToast, showSuccess } = require('../../utils/toast.js');
 const { TOAST_MESSAGES } = require('../../utils/constants.js');
+const { ensurePrivacyAuthorized } = require('../../utils/privacy.js');
 const { formatDate } = require('../../utils/date.js');
 const { uploadImageToCloud, uploadVoiceToCloud } = require('../../utils/cloud.js');
 
@@ -307,6 +308,9 @@ Page({
       return;
     }
 
+    const privacyOk = await ensurePrivacyAuthorized('home.chooseMedia');
+    if (!privacyOk) return;
+
     wx.chooseMedia({
       count: remaining,
       mediaType: ['image'],
@@ -365,7 +369,7 @@ Page({
     });
   },
 
-  onVoiceToggle(e) {
+  async onVoiceToggle(e) {
     const index = Number(e.currentTarget.dataset.index);
     const { cards, maxVoices, isRecording, recordingCardIndex } = this.data;
 
@@ -383,6 +387,9 @@ Page({
       showToast('最多录制3段语音');
       return;
     }
+
+    const privacyOk = await ensurePrivacyAuthorized('home.record');
+    if (!privacyOk) return;
 
     wx.getSetting({
       success: (res) => {
@@ -770,7 +777,10 @@ Page({
     });
   },
 
-  getLocation() {
+  async getLocation() {
+    const privacyOk = await ensurePrivacyAuthorized('home.location');
+    if (!privacyOk) return;
+
     wx.getLocation({
       type: 'gcj02',
       success: (res) => {

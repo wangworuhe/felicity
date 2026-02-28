@@ -12,6 +12,7 @@ export const COLLECTIONS = {
   HAPPINESS_RECORDS: 'happiness_records',
   FORTUNE_RECORDS: 'fortune_records',
   DIARY_RECORDS: 'diary_records',
+  USER_PROFILES: 'user_profiles',
 };
 
 // 云函数操作类型
@@ -38,6 +39,12 @@ export const FUNCTION_TYPES = {
   DIARY_UPSERT: 'upsertRecord',
   DIARY_DELETE: 'deleteRecord',
   DIARY_LIST_DATES: 'listRecordDates',
+
+  // 用户中心相关
+  USER_GET_PROFILE: 'getUserProfile',
+  USER_UPSERT_PROFILE: 'upsertUserProfile',
+  USER_GET_SUMMARY: 'getMyDataSummary',
+  USER_DELETE_ALL_DATA: 'deleteMyData',
 };
 
 // 环境配置
@@ -83,6 +90,45 @@ export const TOAST_MESSAGES = {
 
 // 手账预设标签
 export const DIARY_PRESET_TAGS = ['日常', '书账', '美食', '新知'];
+
+// 协议与隐私配置
+export const LEGAL_CONFIG = {
+  APP_NAME: '幸福时刻',
+  ENTITY_NAME: '幸福时刻小程序开发者',
+  CONTACT_EMAIL: 'support@felicity.app',
+  CONTACT_WECHAT: 'FelicitySupport',
+  EFFECTIVE_DATE: '2026-02-28',
+  UPDATED_DATE: '2026-02-28',
+  VERSION: '1.0.0',
+};
+
+// 权限中心配置
+export const PERMISSION_ITEMS = [
+  {
+    key: 'location',
+    title: '位置信息',
+    desc: '用于记录幸福时刻发生位置',
+    scope: 'scope.userLocation',
+  },
+  {
+    key: 'record',
+    title: '麦克风',
+    desc: '用于录制语音内容',
+    scope: 'scope.record',
+  },
+  {
+    key: 'camera',
+    title: '相机',
+    desc: '用于拍照上传图片',
+    scope: 'scope.camera',
+  },
+];
+
+export const AUDIT_MESSAGES = {
+  PRIVACY_AUTH_REQUIRED: '请先同意隐私保护指引后继续使用',
+  PERMISSION_DENIED: '权限被拒绝，可前往设置开启',
+  DELETE_DATA_CONFIRM: '删除后无法恢复，请谨慎操作',
+};
 
 // 错误消息
 export const ERROR_MESSAGES = {

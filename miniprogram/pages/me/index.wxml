@@ -1,4 +1,136 @@
-<view class="container placeholder">
-  <text class="title">刻</text>
-  <text class="desc">功能正在准备中</text>
+<view class="me-page">
+  <view class="section profile-section">
+    <view class="section-title">账号与身份</view>
+    <view class="profile-header">
+      <button class="avatar-btn" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+        <image class="avatar" src="{{userProfile.avatarPreview || defaultAvatar}}" mode="aspectFill" />
+      </button>
+      <view class="profile-main">
+        <input
+          class="nickname-input"
+          placeholder="请输入昵称"
+          maxlength="20"
+          value="{{userProfile.nickNameInput}}"
+          bindinput="onNickNameInput"
+        />
+        <button
+          class="save-btn"
+          size="mini"
+          loading="{{isSavingProfile}}"
+          disabled="{{isSavingProfile}}"
+          bindtap="onSaveProfile"
+        >
+          保存资料
+        </button>
+      </view>
+    </view>
+    <view class="info-row">
+      <text class="label">用户标识</text>
+      <text class="value">{{userProfile.maskedOpenId || '-'}}</text>
+    </view>
+    <view class="info-row">
+      <text class="label">创建时间</text>
+      <text class="value">{{userProfile.createdAt}}</text>
+    </view>
+    <view class="info-row">
+      <text class="label">更新时间</text>
+      <text class="value">{{userProfile.updatedAt}}</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">我的数据</view>
+    <view class="stats-grid">
+      <view class="stat-item">
+        <text class="stat-num">{{summary.happinessCount}}</text>
+        <text class="stat-label">幸福</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num">{{summary.fortuneCount}}</text>
+        <text class="stat-label">反思</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num">{{summary.diaryCount}}</text>
+        <text class="stat-label">手账</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num">{{summary.totalCount}}</text>
+        <text class="stat-label">总计</text>
+      </view>
+    </view>
+    <view class="info-row">
+      <text class="label">最近活跃</text>
+      <text class="value">{{summary.latestActiveAt}}</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">协议与隐私</view>
+    <view class="menu-item" bindtap="onOpenLegal" data-page="user-agreement">
+      <text>用户协议</text>
+      <text class="arrow">></text>
+    </view>
+    <view class="menu-item" bindtap="onOpenLegal" data-page="privacy-policy">
+      <text>隐私政策</text>
+      <text class="arrow">></text>
+    </view>
+    <view class="menu-item" bindtap="onOpenLegal" data-page="personal-info-list">
+      <text>个人信息收集清单</text>
+      <text class="arrow">></text>
+    </view>
+    <view class="menu-item" bindtap="onOpenLegal" data-page="third-party-list">
+      <text>第三方共享清单</text>
+      <text class="arrow">></text>
+    </view>
+    <view class="menu-item" bindtap="onOpenPrivacyContract">
+      <text>隐私保护指引</text>
+      <text class="arrow">></text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">权限管理</view>
+    <view class="permission-item" wx:for="{{permissionList}}" wx:key="key">
+      <view class="permission-main">
+        <text class="permission-title">{{item.title}}</text>
+        <text class="permission-desc">{{item.desc}}</text>
+      </view>
+      <view class="permission-right">
+        <text class="permission-status">{{item.statusText}}</text>
+        <button
+          wx:if="{{item.status !== 'authorized'}}"
+          class="permission-btn"
+          size="mini"
+          data-scope="{{item.scope}}"
+          bindtap="onRequestPermission"
+        >
+          去授权
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">数据权利与关于</view>
+    <view class="menu-item" bindtap="onClearLocalCache">
+      <text>清理本地缓存</text>
+      <text class="arrow">></text>
+    </view>
+    <view class="menu-item danger" bindtap="onDeleteMyData">
+      <text>删除我的全部数据</text>
+      <text class="arrow">></text>
+    </view>
+    <view class="info-row">
+      <text class="label">联系邮箱</text>
+      <text class="value">{{legalConfig.CONTACT_EMAIL}}</text>
+    </view>
+    <view class="info-row">
+      <text class="label">联系微信</text>
+      <text class="value">{{legalConfig.CONTACT_WECHAT}}</text>
+    </view>
+    <view class="info-row">
+      <text class="label">版本号</text>
+      <text class="value">{{appVersion}}</text>
+    </view>
+  </view>
 </view>
