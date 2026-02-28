@@ -6,18 +6,20 @@
   </view>
 
   <scroll-view class="modal-body" scroll-y>
-    <textarea
-      class="edit-textarea"
-      value="{{editContent}}"
-      bindinput="onEditInput"
-      placeholder="写点什么..."
-      placeholder-class="edit-placeholder"
-      maxlength="-1"
-      auto-height
-      show-confirm-bar="{{false}}"
-    />
+    <view class="edit-field">
+      <textarea
+        class="edit-textarea"
+        value="{{editContent}}"
+        bindinput="onEditInput"
+        placeholder="写点什么..."
+        placeholder-class="edit-placeholder"
+        maxlength="-1"
+        auto-height
+        show-confirm-bar="{{false}}"
+      />
+    </view>
 
-    <view class="media-section" wx:if="{{showMediaTools && imageUrls.length}}">
+    <view class="media-section" wx:if="{{showImageTools && imageUrls.length}}">
       <view class="media-label">图片</view>
       <view class="image-list">
         <view class="image-item" wx:for="{{imageUrls}}" wx:key="index">
@@ -56,6 +58,7 @@
       <view
         class="tool-btn {{imageUrls.length ? 'has-media' : ''}}"
         bindtap="onChooseImage"
+        wx:if="{{showImageTools}}"
       >
         <text class="tool-label">图片</text>
       </view>

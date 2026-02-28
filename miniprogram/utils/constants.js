@@ -11,6 +11,7 @@ export const CLOUD_FUNCTIONS = {
 export const COLLECTIONS = {
   HAPPINESS_RECORDS: 'happiness_records',
   FORTUNE_RECORDS: 'fortune_records',
+  DIARY_RECORDS: 'diary_records',
 };
 
 // 云函数操作类型
@@ -29,6 +30,14 @@ export const FUNCTION_TYPES = {
   FORTUNE_LIST: 'listRecords',
   FORTUNE_UPSERT: 'upsertRecord',
   FORTUNE_DELETE: 'deleteRecord',
+
+  // 手账日记相关
+  DIARY_CREATE: 'createRecord',
+  DIARY_LIST: 'listRecords',
+  DIARY_LIST_BY_DATE: 'listRecordsByDateKey',
+  DIARY_UPSERT: 'upsertRecord',
+  DIARY_DELETE: 'deleteRecord',
+  DIARY_LIST_DATES: 'listRecordDates',
 };
 
 // 环境配置
@@ -64,7 +73,16 @@ export const TOAST_MESSAGES = {
   IMAGE_UPLOADING: '上传图片中...',
   IMAGE_UPLOAD_SUCCESS: '图片上传成功',
   IMAGE_UPLOAD_FAILED: '图片上传失败',
+
+  // 手账日记相关
+  DIARY_SAVE_SUCCESS: '记录成功',
+  DIARY_SAVE_FAILED: '记录失败',
+  DIARY_DELETE_SUCCESS: '删除成功',
+  DIARY_DELETE_FAILED: '删除失败',
 };
+
+// 手账预设标签
+export const DIARY_PRESET_TAGS = ['日常', '书账', '美食', '新知'];
 
 // 错误消息
 export const ERROR_MESSAGES = {

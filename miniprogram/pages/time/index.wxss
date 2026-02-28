@@ -1,20 +1,404 @@
-.placeholder {
+.container {
   min-height: 100vh;
-  background: #FFF8E7;
+  background: #FFFFFF;
+  padding: 0 8px 140px;
+  box-sizing: border-box;
+}
+
+/* 快速输入区 */
+.input-section {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+.input-card {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid #07c160;
+  border-radius: 8px;
+  background: #FFFFFF;
+}
+
+.content-input {
+  width: 100%;
+  min-height: 70px;
+  max-height: 200px;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #2C2C2C;
+  background: transparent;
+  letter-spacing: 0.5px;
+}
+
+.placeholder {
+  color: #8FA7C7;
+  font-size: 15px;
+  font-style: italic;
+}
+
+/* 标签选择 */
+.tag-scroll {
   display: flex;
-  flex-direction: column;
+  white-space: nowrap;
+  height: 28px;
+  padding: 3px 0;
+  overflow-y: hidden;
+}
+
+.tag-item {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  height: 22px;
+  padding: 0 8px;
+  margin-right: 6px;
+  border-radius: 10px;
+  background: #F5F5F5;
+  flex-shrink: 0;
 }
 
-.title {
-  font-size: 28px;
-  font-weight: bold;
-  color: #FF6B6B;
+.tag-item.active {
+  background: #FF6B6B;
 }
 
-.desc {
-  font-size: 14px;
+.tag-item.active .tag-text {
+  color: #FFFFFF;
+}
+
+.tag-text {
+  font-size: 13px;
+  color: #666;
+  line-height: 1;
+}
+
+.tag-item.add-tag {
+  background: transparent;
+  border: 1px dashed #ccc;
+  padding: 2px 8px;
+}
+
+.tag-item.add-tag .tag-text {
   color: #999;
+  font-size: 13px;
+}
+
+.tag-item.add-tag:active {
+  background: #f5f5f5;
+}
+
+/* 标签编辑模式 */
+.tag-edit-wrap {
+  padding: 3px 0;
+}
+
+.tag-edit-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-edit-item {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 2px 0 8px;
+  border-radius: 10px;
+  background: #F5F5F5;
+  border: 1px dashed #ccc;
+  position: relative;
+  transition: transform 0.15s ease;
+}
+
+.tag-edit-item.dragging {
+  opacity: 0.7;
+  background: #e8e8e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+  transition: none;
+}
+
+.tag-edit-text {
+  font-size: 13px;
+  color: #666;
+  line-height: 1;
+}
+
+.tag-delete-btn {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tag-delete-icon {
+  font-size: 14px;
+  color: #FF6B6B;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.tag-edit-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0 0;
+}
+
+.tag-edit-done {
+  font-size: 13px;
+  color: #07c160;
+  font-weight: 600;
+}
+
+/* 工具栏 */
+.input-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0 0;
+}
+
+.voice-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: #FFF9E6;
+}
+
+.voice-btn.recording {
+  background: #FFE8E8;
+}
+
+.voice-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.voice-label {
+  font-size: 12px;
+  color: #FF6B6B;
+  font-weight: 600;
+}
+
+.submit-btn {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  flex: 0 0 60px;
+  margin: 0 0 0 auto !important;
+  padding: 0 !important;
+  height: 28px;
+  line-height: 28px;
+  background: #F5F5F5;
+  color: #999;
+  border: none;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  transition: all 0.3s ease-out;
+}
+
+.submit-btn.active {
+  background: linear-gradient(135deg, #FFD93D 0%, #FFB84D 50%, #FF6B6B 100%);
+  color: white;
+  box-shadow: 0 3px 10px rgba(255, 107, 107, 0.25);
+}
+
+.submit-btn:active {
+  transform: scale(0.96);
+}
+
+/* 当日条目列表 */
+.records-section {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  margin-top: 16px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1F3B6D;
+}
+
+.record-count {
+  font-size: 12px;
+  color: #999;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 0;
+}
+
+.empty-text {
+  font-size: 14px;
+  color: #ccc;
+}
+
+.list {
+  padding-bottom: 12px;
+}
+
+.record-card {
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  border: 1px solid #f0f0f0;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.card-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.card-tag {
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: #FFF9E6;
+}
+
+.card-tag-text {
+  font-size: 11px;
+  color: #E6A23C;
+}
+
+.card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.voice-badge {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #FFF9E6;
+}
+
+.voice-badge:active {
+  background: #FFE8E8;
+}
+
+.voice-badge-icon {
+  font-size: 10px;
+  color: #E6A23C;
+}
+
+.more-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.more-btn:active {
+  background: #f5f5f5;
+}
+
+.more-dots {
+  font-size: 18px;
+  color: #999;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.card-content {
+  padding: 0;
+}
+
+.content-text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #333;
+  word-break: break-all;
+}
+
+.loading-tip {
+  text-align: center;
+  padding: 16px 0;
+  font-size: 13px;
+  color: #999;
+}
+
+/* 操作弹窗 */
+.popup-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+}
+
+.action-popup {
+  position: fixed;
+  z-index: 11;
+  background: #fff;
+  border-radius: 12px;
+  padding: 4px 0;
+  min-width: 120px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.popup-item {
+  padding: 12px 20px;
+}
+
+.popup-item:active {
+  background: #f5f5f5;
+}
+
+.popup-item-text {
+  font-size: 15px;
+  color: #333;
+}
+
+.popup-item-text.delete {
+  color: #FF4D4F;
+}
+
+.popup-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 0 12px;
 }

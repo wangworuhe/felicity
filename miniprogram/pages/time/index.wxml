@@ -1,4 +1,155 @@
-<view class="container placeholder">
-  <text class="title">时</text>
-  <text class="desc">功能正在准备中</text>
+<view class="container">
+  <!-- 日历组件 -->
+  <calendar
+    selectedDate="{{selectedDate}}"
+    markedDates="{{markedDates}}"
+    bind:dateSelect="onDateSelect"
+    bind:monthChange="onMonthChange"
+  />
+
+  <!-- 快速输入区 -->
+  <view class="input-section">
+    <view class="input-card">
+      <textarea
+        class="content-input"
+        placeholder="记录此刻..."
+        placeholder-class="placeholder"
+        value="{{inputValue}}"
+        bindinput="onInputChange"
+        maxlength="1000"
+        show-confirm-bar="{{false}}"
+        auto-height
+      />
+
+      <!-- 标签选择 - 普通模式 -->
+      <scroll-view class="tag-scroll" scroll-x enable-flex wx:if="{{!editingTags}}">
+        <view
+          class="tag-item {{selectedTag === item ? 'active' : ''}}"
+          wx:for="{{allTags}}"
+          wx:key="*this"
+          bindtap="onTagSelect"
+          bindlongpress="onEnterTagEdit"
+          data-tag="{{item}}"
+        >
+          <text class="tag-text">{{item}}</text>
+        </view>
+        <view class="tag-item add-tag" bindtap="onAddTag">
+          <text class="tag-text">+</text>
+        </view>
+      </scroll-view>
+
+      <!-- 标签编辑 - 编辑模式 -->
+      <view class="tag-edit-wrap" wx:if="{{editingTags}}">
+        <view class="tag-edit-list">
+          <view
+            class="tag-edit-item {{draggingIndex === index ? 'dragging' : ''}}"
+            wx:for="{{allTags}}"
+            wx:key="*this"
+            data-index="{{index}}"
+            bindtouchstart="onDragStart"
+            catchtouchmove="onDragMove"
+            bindtouchend="onDragEnd"
+            style="{{draggingIndex === index ? 'transform: translateX(' + dragOffsetX + 'px);' : ''}}"
+          >
+            <text class="tag-edit-text">{{item}}</text>
+            <view class="tag-delete-btn" catchtap="onTagDelete" data-index="{{index}}">
+              <text class="tag-delete-icon">×</text>
+            </view>
+          </view>
+        </view>
+        <view class="tag-edit-footer">
+          <view class="tag-item add-tag" bindtap="onAddTag">
+            <text class="tag-text">+</text>
+          </view>
+          <text class="tag-edit-done" bindtap="onFinishTagEdit">完成</text>
+        </view>
+      </view>
+
+      <!-- 工具栏 -->
+      <view class="input-toolbar">
+        <view class="voice-btn {{isRecording ? 'recording' : ''}}" bindtap="onVoiceToggle">
+          <text class="voice-icon">{{isRecording ? '■' : '🎙'}}</text>
+          <text class="voice-label" wx:if="{{isRecording}}">{{recordingTime}}s</text>
+        </view>
+        <button
+          class="submit-btn {{inputValue ? 'active' : ''}}"
+          bindtap="onSave"
+          size="mini"
+          disabled="{{!inputValue || saving}}"
+          loading="{{saving}}"
+        >
+          {{saving ? '保存中...' : '保存'}}
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 当日条目列表 -->
+  <view class="records-section">
+    <view class="section-header">
+      <text class="section-title">{{displayDateTitle}}</text>
+      <text class="record-count" wx:if="{{records.length > 0}}">{{records.length}}条记录</text>
+    </view>
+
+    <view class="empty" wx:if="{{records.length === 0 && !loading}}">
+      <text class="empty-text">这一天还没有记录</text>
+    </view>
+
+    <view class="list" wx:if="{{records.length > 0}}">
+      <view class="record-card" wx:for="{{records}}" wx:key="_id">
+        <view class="card-header">
+          <view class="card-left">
+            <text class="card-time">{{item._displayTime}}</text>
+            <view class="card-tag" wx:if="{{item.tag}}">
+              <text class="card-tag-text">{{item.tag}}</text>
+            </view>
+          </view>
+          <view class="card-header-right">
+            <view class="voice-badge" wx:if="{{item.voice_urls.length > 0}}" catchtap="onPlayVoice" data-index="{{index}}">
+              <text class="voice-badge-icon">{{playingVoiceKey === 'record-' + index ? '⏸' : '▶'}}</text>
+            </view>
+            <view class="more-btn" catchtap="onRecordAction" data-index="{{index}}">
+              <text class="more-dots">···</text>
+            </view>
+          </view>
+        </view>
+        <view class="card-content">
+          <text class="content-text">{{item.content}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="loading-tip" wx:if="{{loading}}">
+      <text>加载中...</text>
+    </view>
+  </view>
+
+  <!-- 操作弹窗 -->
+  <view class="popup-mask" wx:if="{{actionPopup.visible}}" catchtap="closeActionPopup"></view>
+  <view
+    class="action-popup"
+    wx:if="{{actionPopup.visible}}"
+    style="top: {{actionPopup.y}}px; right: {{actionPopup.right}}px;"
+    catchtap="noop"
+  >
+    <view class="popup-item" catchtap="onPopupEdit">
+      <text class="popup-item-text">编辑</text>
+    </view>
+    <view class="popup-item" catchtap="onPopupCopy">
+      <text class="popup-item-text">复制</text>
+    </view>
+    <view class="popup-divider"></view>
+    <view class="popup-item" catchtap="onPopupDelete">
+      <text class="popup-item-text delete">删除</text>
+    </view>
+  </view>
+
+  <!-- 编辑弹窗 -->
+  <edit-modal
+    visible="{{editModalVisible}}"
+    record="{{editModalRecord}}"
+    recordType="diary"
+    bind:save="onEditSave"
+    bind:close="onEditClose"
+  />
 </view>

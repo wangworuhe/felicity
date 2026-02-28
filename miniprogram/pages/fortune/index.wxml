@@ -1,38 +1,40 @@
 <view class="container">
   <!-- 表单卡片 -->
-  <view class="card-item">
-    <view class="card-header">
-      <text class="card-title">今日反思</text>
-    </view>
-    <view class="input-wrapper {{inputFocus ? 'focused' : ''}}">
-      <view class="input-box {{inputFocus ? 'focused' : ''}}">
-        <textarea
-          class="content-input"
-          placeholder="写下今天的一点反思..."
-          placeholder-class="placeholder"
-          value="{{inputValue}}"
-          bindinput="onInputChange"
-          bindfocus="onInputFocus"
-          bindblur="onInputBlur"
-          maxlength="500"
-          show-confirm-bar="{{false}}"
-          auto-height
-        />
-        <view class="char-count">
-          <text>{{inputValue.length}}</text>
-        </view>
+  <view class="form">
+    <view class="card-item">
+      <view class="card-header">
+        <text class="card-title">今日反思</text>
       </view>
-      <view class="input-toolbar">
-        <view></view>
-        <button
-          class="submit-btn {{inputValue ? 'active' : ''}}"
-          bindtap="onSave"
-          size="mini"
-          disabled="{{!inputValue || saving}}"
-          loading="{{saving}}"
-        >
-          {{saving ? '保存中...' : '保存'}}
-        </button>
+      <view class="input-wrapper {{inputFocus ? 'focused' : ''}}">
+        <view class="input-box {{inputFocus ? 'focused' : ''}}">
+          <textarea
+            class="content-input"
+            placeholder="写下今天的一点反思..."
+            placeholder-class="placeholder"
+            value="{{inputValue}}"
+            bindinput="onInputChange"
+            bindfocus="onInputFocus"
+            bindblur="onInputBlur"
+            maxlength="500"
+            show-confirm-bar="{{false}}"
+            auto-height
+          />
+          <view class="char-count">
+            <text>{{inputValue.length}}</text>
+          </view>
+        </view>
+        <view class="input-toolbar">
+          <view></view>
+          <button
+            class="submit-btn {{inputValue ? 'active' : ''}}"
+            bindtap="onSave"
+            size="mini"
+            disabled="{{!inputValue || saving}}"
+            loading="{{saving}}"
+          >
+            {{saving ? '保存中...' : '保存'}}
+          </button>
+        </view>
       </view>
     </view>
   </view>

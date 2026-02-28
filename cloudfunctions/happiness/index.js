@@ -3,10 +3,10 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
-const ALLOWED_COLLECTIONS = ['happiness_records', 'fortune_records'];
+const ALLOWED_COLLECTIONS = ['happiness_records', 'fortune_records', 'diary_records'];
 
 exports.main = async (event, context) => {
-  const { type, collection, data, page, limit, id, dateKey } = event;
+  const { type, collection, data, page, limit, id, dateKey, startDate, endDate } = event;
   const wxContext = cloud.getWXContext();
 
   if (collection && !ALLOWED_COLLECTIONS.includes(collection)) {
@@ -31,6 +31,8 @@ exports.main = async (event, context) => {
       return await upsertRecord(collection, wxContext.OPENID, data);
     case 'listRecordsByDateKey':
       return await listRecordsByDateKey(collection, wxContext.OPENID, dateKey);
+    case 'listRecordDates':
+      return await listRecordDates(collection, wxContext.OPENID, startDate, endDate);
     default:
       return {
         code: -1,
@@ -50,11 +52,24 @@ function sanitizeData(data) {
   };
 }
 
+function sanitizeDiaryData(data) {
+  return {
+    content: data.content || '',
+    tag: data.tag || '日常',
+    voice_urls: Array.isArray(data.voice_urls) ? data.voice_urls : [],
+    date_key: data.date_key || ''
+  };
+}
+
+function getSanitizedData(collection, data) {
+  return collection === 'diary_records' ? sanitizeDiaryData(data) : sanitizeData(data);
+}
+
 async function createRecord(collection, openid, data) {
   try {
     const now = new Date().toISOString();
     const record = {
-      ...sanitizeData(data),
+      ...getSanitizedData(collection, data),
       _openid: openid,
       created_at: now,
       updated_at: now
@@ -204,8 +219,7 @@ async function listRecordsByDateKey(collection, openid, dateKey) {
   try {
     const result = await db.collection(collection)
       .where({ _openid: openid, date_key: dateKey })
-      .orderBy('order', 'asc')
-      .orderBy('created_at', 'asc')
+      .orderBy('created_at', 'desc')
       .get();
 
     return {
@@ -223,11 +237,30 @@ async function listRecordsByDateKey(collection, openid, dateKey) {
   }
 }
 
+async function listRecordDates(collection, openid, startDate, endDate) {
+  try {
+    const result = await db.collection(collection)
+      .where({
+        _openid: openid,
+        date_key: _.gte(startDate).and(_.lte(endDate))
+      })
+      .field({ date_key: true })
+      .limit(100)
+      .get();
+
+    const dates = [...new Set(result.data.map(r => r.date_key))];
+    return { code: 0, message: '获取成功', data: dates };
+  } catch (error) {
+    console.error('获取记录日期失败:', error);
+    return { code: -1, message: '获取记录日期失败', error: error.message };
+  }
+}
+
 async function upsertRecord(collection, openid, data) {
   try {
     const now = new Date().toISOString();
     const record = {
-      ...sanitizeData(data),
+      ...getSanitizedData(collection, data),
       _openid: openid,
       updated_at: now
     };

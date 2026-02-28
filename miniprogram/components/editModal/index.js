@@ -1,5 +1,6 @@
 const { upsertHappinessRecord } = require('../../services/happiness.js');
 const { upsertFortuneRecord } = require('../../services/fortune.js');
+const { upsertDiaryRecord } = require('../../services/diary.js');
 const { showLoading, hideLoading, showToast, showSuccess } = require('../../utils/toast.js');
 const { TOAST_MESSAGES } = require('../../utils/constants.js');
 const { uploadImageToCloud, uploadVoiceToCloud } = require('../../utils/cloud.js');
@@ -21,7 +22,8 @@ Component({
     maxImages: 3,
     maxVoices: 3,
     playingVoiceKey: '',
-    showMediaTools: true
+    showMediaTools: true,
+    showImageTools: true
   },
 
   observers: {
@@ -35,8 +37,13 @@ Component({
     },
     'visible': function(visible) {
       if (visible) {
-        const showMediaTools = this.properties.recordType !== 'fortune';
-        this.setData({ showMediaTools });
+        const recordType = this.properties.recordType;
+        // fortune: 纯文字，无媒体工具
+        // diary: 文字 + 语音，无图片
+        // happiness: 文字 + 图片 + 语音
+        const showMediaTools = recordType !== 'fortune';
+        const showImageTools = recordType === 'happiness';
+        this.setData({ showMediaTools, showImageTools });
         if (showMediaTools) {
           this.initRecorderManager();
         }
@@ -212,6 +219,14 @@ Component({
           result = await upsertFortuneRecord({
             _id: record._id,
             content: editContent
+          });
+        } else if (recordType === 'diary') {
+          result = await upsertDiaryRecord({
+            _id: record._id,
+            content: editContent,
+            tag: record.tag,
+            voice_urls: voiceUrls,
+            date_key: record.date_key
           });
         } else {
           const payload = {
