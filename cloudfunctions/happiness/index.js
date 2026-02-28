@@ -101,7 +101,6 @@ async function createRecord(collection, openid, data) {
     return {
       code: -1,
       message: '记录失败',
-      error: '内部错误'
     };
   }
 }
@@ -127,7 +126,6 @@ async function listRecords(collection, openid, page = 1, limit = 10) {
     return {
       code: -1,
       message: '获取记录列表失败',
-      error: '内部错误'
     };
   }
 }
@@ -155,7 +153,6 @@ async function getRecordDetail(collection, openid, id) {
     return {
       code: -1,
       message: '获取记录详情失败',
-      error: '内部错误'
     };
   }
 }
@@ -182,7 +179,6 @@ async function deleteRecord(collection, openid, id) {
     return {
       code: -1,
       message: '删除记录失败',
-      error: '内部错误'
     };
   }
 }
@@ -219,7 +215,6 @@ async function getRandomRecord(collection, openid) {
     return {
       code: -1,
       message: '获取随机记录失败',
-      error: '内部错误'
     };
   }
 }
@@ -241,7 +236,6 @@ async function listRecordsByDateKey(collection, openid, dateKey) {
     return {
       code: -1,
       message: '获取记录失败',
-      error: '内部错误'
     };
   }
 }
@@ -261,7 +255,7 @@ async function listRecordDates(collection, openid, startDate, endDate) {
     return { code: 0, message: '获取成功', data: dates };
   } catch (error) {
     console.error('获取记录日期失败:', error);
-    return { code: -1, message: '获取记录日期失败', error: error.message };
+    return { code: -1, message: '获取记录日期失败' };
   }
 }
 
@@ -331,7 +325,6 @@ async function upsertRecord(collection, openid, data) {
     return {
       code: -1,
       message: '更新记录失败',
-      error: '内部错误'
     };
   }
 }
@@ -365,7 +358,6 @@ async function getUserProfile(openid) {
     return {
       code: -1,
       message: '获取用户资料失败',
-      error: '内部错误'
     };
   }
 }
@@ -427,7 +419,6 @@ async function upsertUserProfile(openid, data) {
     return {
       code: -1,
       message: '更新用户资料失败',
-      error: '内部错误'
     };
   }
 }
@@ -497,7 +488,6 @@ async function getMyDataSummary(openid) {
     return {
       code: -1,
       message: '获取数据汇总失败',
-      error: '内部错误'
     };
   }
 }
@@ -606,7 +596,6 @@ async function deleteMyData(openid) {
     return {
       code: -1,
       message: '删除用户数据失败',
-      error: '内部错误'
     };
   }
 }
