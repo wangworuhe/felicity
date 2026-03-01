@@ -43,7 +43,6 @@ Page({
 
   onLoad() {
     this.setCurrentDate();
-    this.getLocation();
     this.setFormMinHeight();
     this.initRecorderManager();
     this.initCards();
@@ -518,13 +517,19 @@ Page({
     this.setData({ submitting: true });
     showLoading('保存中...');
     try {
+      // 保存时按需获取位置（静默获取，失败不阻塞保存）
+      let currentLocation = location;
+      if (!currentLocation) {
+        currentLocation = await this._tryGetLocation();
+      }
+
       const payload = {
         _id: target.cloudId || undefined,
         content: target.content,
         image_urls: target.imageUrls,
         voice_urls: target.voiceUrls,
         voice_durations: target.voiceDurations || [],
-        location,
+        location: currentLocation,
         date_key: dateKey,
         order: target.order
       };
@@ -814,29 +819,6 @@ Page({
     });
   },
 
-  async getLocation() {
-    const privacyOk = await ensurePrivacyAuthorized('home.location');
-    if (!privacyOk) return;
-
-    const scopeOk = await guardScope('scope.userLocation', '请允许获取位置以记录幸福发生地点');
-    if (!scopeOk) return;
-
-    wx.getLocation({
-      type: 'gcj02',
-      success: (res) => {
-        this.setData({
-          location: {
-            latitude: res.latitude,
-            longitude: res.longitude
-          }
-        });
-      },
-      fail: (err) => {
-        console.log('获取位置失败:', err);
-      }
-    });
-  },
-
   goToRecords() {
     wx.navigateTo({
       url: '/pages/records/index'
@@ -847,6 +829,29 @@ Page({
     wx.navigateTo({
       url: '/pages/random/index'
     });
+  },
+
+  // 静默获取位置，失败返回 null 不阻塞业务
+  async _tryGetLocation() {
+    try {
+      const privacyOk = await ensurePrivacyAuthorized('home.location');
+      if (!privacyOk) return null;
+      const scopeOk = await guardScope('scope.userLocation', '请允许获取位置以记录幸福发生地点');
+      if (!scopeOk) return null;
+      return await new Promise((resolve) => {
+        wx.getLocation({
+          type: 'gcj02',
+          success: (res) => {
+            const loc = { latitude: res.latitude, longitude: res.longitude };
+            this.setData({ location: loc });
+            resolve(loc);
+          },
+          fail: () => resolve(null)
+        });
+      });
+    } catch {
+      return null;
+    }
   },
 
   _formatVoiceDuration(ms) {

@@ -6,6 +6,28 @@ const _ = db.command;
 const ALLOWED_COLLECTIONS = ['happiness_records', 'fortune_records', 'diary_records', 'user_profiles'];
 const USER_PROFILE_COLLECTION = 'user_profiles';
 
+// 文本内容安全检查（v2 异步检测）
+async function checkTextSecurity(content, openid) {
+  if (!content || !content.trim()) return true;
+  try {
+    const result = await cloud.openapi.security.msgSecCheck({
+      openid,
+      scene: 1, // 资料场景
+      version: 2,
+      content: content.trim()
+    });
+    // suggest 为 risky 时判定为违规
+    if (result && result.result && result.result.suggest === 'risky') {
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('内容安全检查失败:', err);
+    // 接口异常时放行，避免阻塞正常功能
+    return true;
+  }
+}
+
 exports.main = async (event, context) => {
   const { type, collection, data, page, limit, id, dateKey, startDate, endDate } = event;
   const wxContext = cloud.getWXContext();
@@ -50,11 +72,26 @@ exports.main = async (event, context) => {
   }
 };
 
+// 校验 fileId 格式：必须为 cloud:// 前缀 + 业务路径
+const ALLOWED_FILE_PREFIXES = ['happiness/', 'voice/', 'avatar/', 'diary/', 'fortune/'];
+function isValidFileId(id) {
+  if (typeof id !== 'string' || !id.startsWith('cloud://')) return false;
+  // cloud://env-id.xxx/path — 提取 / 后的路径部分
+  const pathStart = id.indexOf('/', 8); // 跳过 cloud://
+  if (pathStart === -1) return false;
+  const filePath = id.substring(pathStart + 1);
+  return ALLOWED_FILE_PREFIXES.some(prefix => filePath.startsWith(prefix));
+}
+
+function filterValidFileIds(arr) {
+  return Array.isArray(arr) ? arr.filter(isValidFileId) : [];
+}
+
 function sanitizeData(data) {
   return {
     content: data.content || '',
-    image_urls: Array.isArray(data.image_urls) ? data.image_urls : [],
-    voice_urls: Array.isArray(data.voice_urls) ? data.voice_urls : [],
+    image_urls: filterValidFileIds(data.image_urls),
+    voice_urls: filterValidFileIds(data.voice_urls),
     voice_durations: Array.isArray(data.voice_durations) ? data.voice_durations : [],
     location: data.location || null,
     date_key: data.date_key || '',
@@ -66,7 +103,7 @@ function sanitizeDiaryData(data) {
   return {
     content: data.content || '',
     tag: data.tag || '日常',
-    voice_urls: Array.isArray(data.voice_urls) ? data.voice_urls : [],
+    voice_urls: filterValidFileIds(data.voice_urls),
     voice_durations: Array.isArray(data.voice_durations) ? data.voice_durations : [],
     date_key: data.date_key || ''
   };
@@ -78,6 +115,12 @@ function getSanitizedData(collection, data) {
 
 async function createRecord(collection, openid, data) {
   try {
+    // 内容安全检查
+    const isSafe = await checkTextSecurity(data.content, openid);
+    if (!isSafe) {
+      return { code: -2, message: '内容包含违规信息，请修改后重试' };
+    }
+
     const now = new Date().toISOString();
     const record = {
       ...getSanitizedData(collection, data),
@@ -271,6 +314,12 @@ async function listRecordDates(collection, openid, startDate, endDate) {
 
 async function upsertRecord(collection, openid, data) {
   try {
+    // 内容安全检查
+    const isSafe = await checkTextSecurity(data.content, openid);
+    if (!isSafe) {
+      return { code: -2, message: '内容包含违规信息，请修改后重试' };
+    }
+
     const now = new Date().toISOString();
     const record = {
       ...getSanitizedData(collection, data),
@@ -281,12 +330,22 @@ async function upsertRecord(collection, openid, data) {
     if (data._id) {
       const _id = data._id;
 
+      // 读取旧记录用于 diff 文件
+      const oldResult = await db.collection(collection)
+        .where({ _id, _openid: openid }).limit(1).get();
+      const oldRecord = oldResult.data.length > 0 ? oldResult.data[0] : null;
+
       const updateResult = await db.collection(collection)
         .where({ _id, _openid: openid })
         .update({ data: record });
 
       if (updateResult.stats.updated === 0) {
         return { code: -1, message: '记录不存在或无权修改' };
+      }
+
+      // 异步清理被移除的云文件
+      if (oldRecord) {
+        cleanRemovedFiles(oldRecord, record);
       }
 
       return {
@@ -302,12 +361,16 @@ async function upsertRecord(collection, openid, data) {
       .get();
 
     if (existResult.data.length > 0) {
-      const existId = existResult.data[0]._id;
+      const oldRecord = existResult.data[0];
+      const existId = oldRecord._id;
       delete record._id;
 
       await db.collection(collection)
         .where({ _id: existId, _openid: openid })
         .update({ data: record });
+
+      // 异步清理被移除的云文件
+      cleanRemovedFiles(oldRecord, record);
 
       return {
         code: 0,
@@ -381,7 +444,8 @@ async function upsertUserProfile(openid, data) {
   try {
     const now = new Date().toISOString();
     const nickName = String(data.nick_name || '').trim().slice(0, 20);
-    const avatarUrl = typeof data.avatar_url === 'string' ? data.avatar_url : '';
+    const rawAvatarUrl = typeof data.avatar_url === 'string' ? data.avatar_url : '';
+    const avatarUrl = rawAvatarUrl && isValidFileId(rawAvatarUrl) ? rawAvatarUrl : '';
 
     const payload = {
       nick_name: nickName,
@@ -512,6 +576,18 @@ async function getMyDataSummary(openid) {
   }
 }
 
+// 计算被移除的文件并异步清理
+function cleanRemovedFiles(oldRecord, newRecord) {
+  const oldFileIds = new Set(collectFileIdsFromRecord(oldRecord));
+  const newFileIds = new Set(collectFileIdsFromRecord(newRecord));
+  const removedIds = [...oldFileIds].filter(id => !newFileIds.has(id));
+  if (removedIds.length > 0) {
+    deleteFilesByChunks(removedIds).catch(err => {
+      console.error('清理被移除的云文件失败:', err);
+    });
+  }
+}
+
 function collectFileIdsFromRecord(record) {
   const fileIds = [];
   const imageUrls = Array.isArray(record.image_urls) ? record.image_urls : [];
@@ -591,7 +667,7 @@ async function deleteMyData(openid) {
 
     const profileList = await collectRecords(USER_PROFILE_COLLECTION, openid);
     profileList.forEach((profile) => {
-      if (typeof profile.avatar_url === 'string' && profile.avatar_url) {
+      if (typeof profile.avatar_url === 'string' && profile.avatar_url && isValidFileId(profile.avatar_url)) {
         allFileIds.push(profile.avatar_url);
       }
     });

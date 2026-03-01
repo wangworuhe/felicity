@@ -45,7 +45,7 @@
     "disableSWC": true
   },
   "appid": "wxae9dbe9a94a52dc9",
-  "projectname": "quickstart-wx-cloud",
+  "projectname": "felicity",
   "libVersion": "3.13.2",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "condition": {
