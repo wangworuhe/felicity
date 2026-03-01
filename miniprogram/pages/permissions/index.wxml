@@ -1,0 +1,28 @@
+<view class="permissions-page">
+  <view class="tip-bar">点击权限项可开启或关闭授权</view>
+
+  <view class="permission-list">
+    <view
+      class="permission-item"
+      wx:for="{{permissionList}}"
+      wx:key="key"
+      data-scope="{{item.scope}}"
+      data-status="{{item.status}}"
+      bindtap="onTogglePermission"
+    >
+      <view class="permission-main">
+        <text class="permission-title">{{item.title}}</text>
+        <text class="permission-desc">{{item.desc}}</text>
+      </view>
+      <view class="permission-right">
+        <view class="toggle {{item.status === 'authorized' ? 'toggle-on' : ''}}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="footer-tip">
+    <text>权限变更需通过系统设置页完成</text>
+  </view>
+</view>

@@ -6,11 +6,11 @@
     "pages/me/index",
     "pages/legal/user-agreement/index",
     "pages/legal/privacy-policy/index",
-    "pages/legal/personal-info-list/index",
-    "pages/legal/third-party-list/index",
     "pages/records/index",
     "pages/record-detail/index",
-    "pages/random/index"
+    "pages/random/index",
+    "pages/permissions/index",
+    "pages/data-rights/index"
   ],
   "window": {
     "backgroundColor": "#FFFFFF",
@@ -50,6 +50,11 @@
         "selectedIconPath": "images/icons/usercenter-active.png"
       }
     ]
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于记录幸福时刻发生的位置"
+    }
   },
   "sitemapLocation": "sitemap.json",
   "style": "v2",

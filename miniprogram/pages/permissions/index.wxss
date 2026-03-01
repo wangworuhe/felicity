@@ -1,0 +1,90 @@
+.permissions-page {
+  min-height: 100vh;
+  background: #f7f8fa;
+  padding: 0 12px 24px;
+  box-sizing: border-box;
+}
+
+.tip-bar {
+  padding: 12px 0;
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+}
+
+.permission-list {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 0 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.permission-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid #f3f3f3;
+}
+
+.permission-item:last-child {
+  border-bottom: none;
+}
+
+.permission-main {
+  flex: 1;
+  padding-right: 12px;
+}
+
+.permission-title {
+  display: block;
+  font-size: 15px;
+  color: #222;
+}
+
+.permission-desc {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #888;
+}
+
+.permission-right {
+  flex-shrink: 0;
+}
+
+.toggle {
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  background: #dcdcdc;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.toggle-on {
+  background: #ff6b6b;
+}
+
+.toggle-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 11px;
+  background: #ffffff;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.toggle-on .toggle-dot {
+  transform: translateX(18px);
+}
+
+.footer-tip {
+  padding: 16px 0;
+  text-align: center;
+  font-size: 12px;
+  color: #bbb;
+}

@@ -5,6 +5,18 @@
   box-sizing: border-box;
 }
 
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.loading-text {
+  font-size: 14px;
+  color: #999;
+}
+
 .section {
   background: #ffffff;
   border-radius: 12px;
@@ -20,20 +32,43 @@
   margin-bottom: 10px;
 }
 
-.profile-header {
+.profile-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.avatar-wrapper {
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
 }
 
 .avatar-btn {
-  width: 72px;
-  height: 72px;
-  border-radius: 36px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 48px !important;
+  height: 48px !important;
+  min-height: 0 !important;
+  border-radius: 24px;
   border: none;
-  padding: 0;
+  padding: 0 !important;
+  margin: 0 !important;
   background: transparent;
+  line-height: 1;
+  overflow: hidden;
 }
 
 .avatar-btn::after {
@@ -41,34 +76,28 @@
 }
 
 .avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 36px;
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
   background: #f2f2f2;
 }
 
-.profile-main {
-  flex: 1;
+.nickname-area {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.nickname-input {
-  width: 100%;
-  min-height: 36px;
-  line-height: 36px;
-  border: 1px solid #e7e7e7;
-  border-radius: 8px;
-  padding: 0 10px;
-  font-size: 14px;
-  box-sizing: border-box;
+.nickname-display {
+  font-size: 16px;
+  font-weight: 500;
+  color: #222;
 }
 
-.save-btn {
-  margin-top: 8px;
-  width: 100%;
-  background: #ff6b6b !important;
-  color: #fff !important;
-  border-radius: 8px;
-  font-size: 13px;
+.nickname-edit-icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.4;
 }
 
 .stats-grid {
@@ -119,55 +148,6 @@
 
 .arrow {
   color: #bbb;
-}
-
-.permission-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid #f3f3f3;
-}
-
-.permission-item:last-child {
-  border-bottom: none;
-}
-
-.permission-main {
-  flex: 1;
-  padding-right: 8px;
-}
-
-.permission-title {
-  display: block;
-  font-size: 14px;
-  color: #222;
-}
-
-.permission-desc {
-  display: block;
-  margin-top: 2px;
-  font-size: 12px;
-  color: #888;
-}
-
-.permission-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.permission-status {
-  font-size: 12px;
-  color: #666;
-}
-
-.permission-btn {
-  border-radius: 6px !important;
-  background: #fff0f0 !important;
-  color: #d94f4f !important;
-  border: 1px solid #ffd5d5 !important;
-  font-size: 12px !important;
 }
 
 .info-row {

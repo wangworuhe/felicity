@@ -14,6 +14,5 @@
   <view class="footer">
     <text>主体：{{legal.ENTITY_NAME}}</text>
     <text>联系邮箱：{{legal.CONTACT_EMAIL}}</text>
-    <text>联系微信：{{legal.CONTACT_WECHAT}}</text>
   </view>
 </view>

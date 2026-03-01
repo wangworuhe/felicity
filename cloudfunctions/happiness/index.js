@@ -159,21 +159,29 @@ async function getRecordDetail(collection, openid, id) {
 
 async function deleteRecord(collection, openid, id) {
   try {
-    const result = await db.collection(collection)
+    const queryResult = await db.collection(collection)
+      .where({ _id: id, _openid: openid })
+      .limit(1)
+      .get();
+
+    if (queryResult.data.length === 0) {
+      return { code: -1, message: '记录不存在' };
+    }
+
+    const record = queryResult.data[0];
+    const fileIds = collectFileIdsFromRecord(record);
+
+    await db.collection(collection)
       .where({ _id: id, _openid: openid })
       .remove();
 
-    if (result.stats.removed === 0) {
-      return {
-        code: -1,
-        message: '记录不存在'
-      };
+    if (fileIds.length > 0) {
+      deleteFilesByChunks(fileIds).catch(err => {
+        console.error('清理云文件失败（不影响记录删除）:', err);
+      });
     }
 
-    return {
-      code: 0,
-      message: '删除成功'
-    };
+    return { code: 0, message: '删除成功' };
   } catch (error) {
     console.error('删除记录失败:', error);
     return {

@@ -7,7 +7,7 @@ const {
 } = require('../../services/happiness.js');
 const { showLoading, hideLoading, showToast, showSuccess } = require('../../utils/toast.js');
 const { TOAST_MESSAGES } = require('../../utils/constants.js');
-const { ensurePrivacyAuthorized } = require('../../utils/privacy.js');
+const { ensurePrivacyAuthorized, guardScope } = require('../../utils/privacy.js');
 const { formatDate } = require('../../utils/date.js');
 const { uploadImageToCloud, uploadVoiceToCloud } = require('../../utils/cloud.js');
 
@@ -330,6 +330,12 @@ Page({
         } finally {
           hideLoading();
         }
+      },
+      fail: (err) => {
+        const errMsg = (err && err.errMsg) || '';
+        if (errMsg.includes('auth') || errMsg.includes('deny') || errMsg.includes('permission')) {
+          guardScope('scope.camera', '请允许使用相机以拍照上传图片');
+        }
       }
     });
   },
@@ -391,34 +397,18 @@ Page({
     const privacyOk = await ensurePrivacyAuthorized('home.record');
     if (!privacyOk) return;
 
-    wx.getSetting({
-      success: (res) => {
-        const authSetting = res.authSetting;
-        if (authSetting['scope.record'] === false) {
-          wx.showModal({
-            title: '需要麦克风权限',
-            content: '请允许使用麦克风以启用录音功能',
-            showCancel: false,
-            confirmText: '去设置',
-            success: (modalRes) => {
-              if (modalRes.confirm) {
-                wx.openSetting();
-              }
-            }
-          });
-        } else {
-          this.setData({ isRecording: true, recordingTime: 0, recordingCardIndex: index });
-          const timer = setInterval(() => {
-            this.setData({ recordingTime: this.data.recordingTime + 1 });
-          }, 1000);
-          this.setData({ recordingTimer: timer });
+    const scopeOk = await guardScope('scope.record', '请允许使用麦克风以启用录音功能');
+    if (!scopeOk) return;
 
-          this.recorderManager.start({
-            duration: 60000,
-            format: 'mp3'
-          });
-        }
-      }
+    this.setData({ isRecording: true, recordingTime: 0, recordingCardIndex: index });
+    const timer = setInterval(() => {
+      this.setData({ recordingTime: this.data.recordingTime + 1 });
+    }, 1000);
+    this.setData({ recordingTimer: timer });
+
+    this.recorderManager.start({
+      duration: 60000,
+      format: 'mp3'
     });
   },
 
@@ -780,6 +770,9 @@ Page({
   async getLocation() {
     const privacyOk = await ensurePrivacyAuthorized('home.location');
     if (!privacyOk) return;
+
+    const scopeOk = await guardScope('scope.userLocation', '请允许获取位置以记录幸福发生地点');
+    if (!scopeOk) return;
 
     wx.getLocation({
       type: 'gcj02',

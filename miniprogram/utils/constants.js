@@ -92,14 +92,14 @@ export const TOAST_MESSAGES = {
 export const DIARY_PRESET_TAGS = ['日常', '书账', '美食', '新知'];
 
 // 协议与隐私配置
+// 上线前请将 CONTACT_EMAIL 替换为真实邮箱
 export const LEGAL_CONFIG = {
   APP_NAME: '幸福时刻',
   ENTITY_NAME: '幸福时刻小程序开发者',
-  CONTACT_EMAIL: 'support@felicity.app',
-  CONTACT_WECHAT: 'FelicitySupport',
+  CONTACT_EMAIL: '741924922@qq.com',
   EFFECTIVE_DATE: '2026-02-28',
-  UPDATED_DATE: '2026-02-28',
-  VERSION: '1.0.0',
+  UPDATED_DATE: '2026-03-01',
+  VERSION: '1.1.0',
 };
 
 // 权限中心配置

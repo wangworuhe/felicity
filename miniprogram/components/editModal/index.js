@@ -3,7 +3,7 @@ const { upsertFortuneRecord } = require('../../services/fortune.js');
 const { upsertDiaryRecord } = require('../../services/diary.js');
 const { showLoading, hideLoading, showToast, showSuccess } = require('../../utils/toast.js');
 const { TOAST_MESSAGES } = require('../../utils/constants.js');
-const { ensurePrivacyAuthorized } = require('../../utils/privacy.js');
+const { ensurePrivacyAuthorized, guardScope } = require('../../utils/privacy.js');
 const { uploadImageToCloud, uploadVoiceToCloud } = require('../../utils/cloud.js');
 
 Component({
@@ -86,6 +86,12 @@ Component({
           } finally {
             hideLoading();
           }
+        },
+        fail: (err) => {
+          const errMsg = (err && err.errMsg) || '';
+          if (errMsg.includes('auth') || errMsg.includes('deny') || errMsg.includes('permission')) {
+            guardScope('scope.camera', '请允许使用相机以拍照上传图片');
+          }
         }
       });
     },
@@ -141,27 +147,14 @@ Component({
       const privacyOk = await ensurePrivacyAuthorized('editModal.record');
       if (!privacyOk) return;
 
-      wx.getSetting({
-        success: (res) => {
-          if (res.authSetting['scope.record'] === false) {
-            wx.showModal({
-              title: '需要麦克风权限',
-              content: '请允许使用麦克风以启用录音功能',
-              showCancel: false,
-              confirmText: '去设置',
-              success: (modalRes) => {
-                if (modalRes.confirm) wx.openSetting();
-              }
-            });
-          } else {
-            this.setData({ isRecording: true, recordingTime: 0 });
-            this._recordingTimer = setInterval(() => {
-              this.setData({ recordingTime: this.data.recordingTime + 1 });
-            }, 1000);
-            this.recorderManager.start({ duration: 60000, format: 'mp3' });
-          }
-        }
-      });
+      const scopeOk = await guardScope('scope.record', '请允许使用麦克风以启用录音功能');
+      if (!scopeOk) return;
+
+      this.setData({ isRecording: true, recordingTime: 0 });
+      this._recordingTimer = setInterval(() => {
+        this.setData({ recordingTime: this.data.recordingTime + 1 });
+      }, 1000);
+      this.recorderManager.start({ duration: 60000, format: 'mp3' });
     },
 
     initAudioContext() {

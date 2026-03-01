@@ -152,6 +152,22 @@ export const deleteFile = (fileList) => {
 };
 
 /**
+ * 获取云文件临时链接
+ * @param {string} fileId - 云文件ID
+ * @returns {Promise<string>} 临时访问链接，失败时返回原始 fileId
+ */
+export const getTempFileURL = async (fileId) => {
+  if (!fileId) return '';
+  try {
+    const result = await wx.cloud.getTempFileURL({ fileList: [fileId] });
+    const first = result.fileList && result.fileList[0];
+    return (first && first.tempFileURL) || fileId;
+  } catch (error) {
+    return fileId;
+  }
+};
+
+/**
  * 上传图片到云存储
  * @param {string} filePath - 本地文件路径
  * @param {string} prefix - 云存储路径前缀，默认 'happiness'

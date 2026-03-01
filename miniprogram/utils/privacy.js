@@ -71,6 +71,48 @@ export const getPermissionStatusList = () => {
 };
 
 /**
+ * 通用权限守卫：检测授权状态 + 拒绝后引导去设置页
+ * @param {string} scope - 权限 scope，如 'scope.record'
+ * @param {string} message - 拒绝后弹窗的说明文案
+ * @returns {Promise<boolean>} 是否获得授权
+ */
+export const guardScope = (scope, message) => {
+  return new Promise((resolve) => {
+    if (!scope) { resolve(false); return; }
+
+    wx.getSetting({
+      success: (res) => {
+        const authSetting = res.authSetting || {};
+        if (authSetting[scope] === false) {
+          wx.showModal({
+            title: '需要权限',
+            content: message || '请前往设置页开启相关权限',
+            confirmText: '去设置',
+            success: (modalRes) => {
+              if (!modalRes.confirm) { resolve(false); return; }
+              wx.openSetting({
+                success: (settingRes) => {
+                  resolve(!!(settingRes.authSetting || {})[scope]);
+                },
+                fail: () => resolve(false),
+              });
+            },
+          });
+          return;
+        }
+
+        wx.authorize({
+          scope,
+          success: () => resolve(true),
+          fail: () => resolve(false),
+        });
+      },
+      fail: () => resolve(false),
+    });
+  });
+};
+
+/**
  * 按需申请单项权限
  */
 export const requestScope = (scope) => {

@@ -1,8 +1,7 @@
-const { getUserProfile, upsertUserProfile, getMyDataSummary, deleteMyData } = require('../../services/user.js');
-const { ensurePrivacyAuthorized, getPermissionStatusList, requestScope } = require('../../utils/privacy.js');
-const { uploadImageToCloud } = require('../../utils/cloud.js');
-const { showLoading, hideLoading, showToast, showSuccess } = require('../../utils/toast.js');
-const { LEGAL_CONFIG, AUDIT_MESSAGES } = require('../../utils/constants.js');
+import { getUserProfile, upsertUserProfile, getMyDataSummary } from '../../services/user.js';
+import { ensurePrivacyAuthorized } from '../../utils/privacy.js';
+import { uploadImageToCloud, getTempFileURL } from '../../utils/cloud.js';
+import { showLoading, hideLoading, showToast, showSuccess } from '../../utils/toast.js';
 
 Page({
   data: {
@@ -23,21 +22,17 @@ Page({
       totalCount: 0,
       latestActiveAt: '-'
     },
-    permissionList: [],
-    legalConfig: LEGAL_CONFIG,
-    appVersion: 'dev',
     isSavingProfile: false,
-    deletingData: false,
     defaultAvatar: '../../images/icons/usercenter-active.png'
   },
 
   onLoad() {
-    this._setAppVersion();
-    this.initPage();
+    this._initialLoaded = false;
+    this.initPage().then(() => { this._initialLoaded = true; });
   },
 
   onShow() {
-    this.refreshPermissionStatus();
+    if (!this._initialLoaded) return;
     this.loadSummary();
   },
 
@@ -46,8 +41,7 @@ Page({
     try {
       await Promise.all([
         this.loadProfile(),
-        this.loadSummary(),
-        this.refreshPermissionStatus()
+        this.loadSummary()
       ]);
     } finally {
       this.setData({ loading: false });
@@ -104,11 +98,6 @@ Page({
     }
   },
 
-  async refreshPermissionStatus() {
-    const permissionList = await getPermissionStatusList();
-    this.setData({ permissionList });
-  },
-
   async onChooseAvatar(e) {
     const tempAvatarPath = e.detail && e.detail.avatarUrl;
     if (!tempAvatarPath) return;
@@ -124,7 +113,7 @@ Page({
         'userProfile.avatarFileId': fileId,
         'userProfile.avatarPreview': preview
       });
-      showSuccess('头像已更新，请保存');
+      await this._saveProfile();
     } catch (error) {
       console.error('上传头像失败:', error);
       showToast('头像上传失败');
@@ -133,21 +122,32 @@ Page({
     }
   },
 
-  onNickNameInput(e) {
-    this.setData({
-      'userProfile.nickNameInput': e.detail.value || ''
+  onEditNickName() {
+    const { userProfile } = this.data;
+    const currentName = userProfile.nickName === '未设置昵称' ? '' : userProfile.nickName;
+    wx.showModal({
+      title: '修改昵称',
+      editable: true,
+      placeholderText: '请输入昵称（最多20字）',
+      content: currentName,
+      success: (res) => {
+        if (!res.confirm) return;
+        const nickName = (res.content || '').trim().slice(0, 20);
+        if (!nickName) {
+          showToast('昵称不能为空');
+          return;
+        }
+        this.setData({ 'userProfile.nickNameInput': nickName });
+        this._saveProfile();
+      }
     });
   },
 
-  async onSaveProfile() {
+  async _saveProfile() {
     const { userProfile, isSavingProfile } = this.data;
     if (isSavingProfile) return;
 
     const nickName = (userProfile.nickNameInput || '').trim().slice(0, 20);
-    if (!nickName) {
-      showToast('请输入昵称');
-      return;
-    }
 
     this.setData({ isSavingProfile: true });
     try {
@@ -157,7 +157,7 @@ Page({
       });
 
       if (result.code === 0) {
-        showSuccess('资料已保存');
+        showSuccess('已保存');
         await this.loadProfile();
       } else {
         showToast(result.message || '保存失败');
@@ -195,130 +195,16 @@ Page({
     });
   },
 
-  async onRequestPermission(e) {
-    const scope = e.currentTarget.dataset.scope;
-    if (!scope) return;
-
-    const result = await requestScope(scope);
-    if (result.ok) {
-      showSuccess('授权成功');
-      this.refreshPermissionStatus();
-      return;
-    }
-
-    if (result.status === 'denied') {
-      wx.showModal({
-        title: '权限已被拒绝',
-        content: '请前往设置页手动开启该权限',
-        confirmText: '去设置',
-        success: (res) => {
-          if (!res.confirm) return;
-          wx.openSetting({
-            success: () => {
-              this.refreshPermissionStatus();
-            }
-          });
-        }
-      });
-    } else {
-      showToast(AUDIT_MESSAGES.PERMISSION_DENIED);
-    }
+  onOpenPermissions() {
+    wx.navigateTo({ url: '/pages/permissions/index' });
   },
 
-  onClearLocalCache() {
-    wx.showModal({
-      title: '清理本地缓存',
-      content: '仅清理本地缓存，不影响云端记录，确定继续吗？',
-      success: (res) => {
-        if (!res.confirm) return;
-        try {
-          wx.clearStorageSync();
-          showSuccess('缓存已清理');
-          this.initPage();
-        } catch (error) {
-          console.error('清理缓存失败:', error);
-          showToast('清理失败');
-        }
-      }
-    });
+  onOpenDataRights() {
+    wx.navigateTo({ url: '/pages/data-rights/index' });
   },
 
-  onDeleteMyData() {
-    if (this.data.deletingData) return;
-
-    wx.showModal({
-      title: '删除全部数据',
-      content: AUDIT_MESSAGES.DELETE_DATA_CONFIRM,
-      confirmText: '继续删除',
-      confirmColor: '#D94F4F',
-      success: (firstRes) => {
-        if (!firstRes.confirm) return;
-        wx.showModal({
-          title: '二次确认',
-          content: '此操作将删除幸福、反思、手账与账号资料，且无法恢复。',
-          confirmText: '确认删除',
-          confirmColor: '#D94F4F',
-          success: (secondRes) => {
-            if (!secondRes.confirm) return;
-            this._confirmDeleteMyData();
-          }
-        });
-      }
-    });
-  },
-
-  async _confirmDeleteMyData() {
-    this.setData({ deletingData: true });
-    showLoading('删除中...');
-    try {
-      const result = await deleteMyData();
-      if (result.code !== 0) {
-        showToast(result.message || '删除失败，请重试');
-        return;
-      }
-
-      try {
-        wx.clearStorageSync();
-      } catch (error) {
-        console.warn('清理本地缓存失败:', error);
-      }
-
-      showSuccess('数据已删除');
-      await this.initPage();
-
-      const failed = result.data && result.data.files && result.data.files.failed;
-      if (Array.isArray(failed) && failed.length > 0) {
-        showToast('记录已删，部分文件稍后清理');
-      }
-    } catch (error) {
-      console.error('删除全部数据失败:', error);
-      showToast('删除失败，请重试');
-    } finally {
-      hideLoading();
-      this.setData({ deletingData: false });
-    }
-  },
-
-  _setAppVersion() {
-    try {
-      if (typeof wx.getAccountInfoSync !== 'function') return;
-      const accountInfo = wx.getAccountInfoSync();
-      const version = (accountInfo.miniProgram && accountInfo.miniProgram.version) || 'dev';
-      this.setData({ appVersion: version || 'dev' });
-    } catch (error) {
-      this.setData({ appVersion: 'dev' });
-    }
-  },
-
-  async _resolveAvatarPreview(fileId) {
-    if (!fileId) return '';
-    try {
-      const result = await wx.cloud.getTempFileURL({ fileList: [fileId] });
-      const first = result.fileList && result.fileList[0];
-      return (first && first.tempFileURL) || fileId;
-    } catch (error) {
-      return fileId;
-    }
+  _resolveAvatarPreview(fileId) {
+    return getTempFileURL(fileId);
   },
 
   _formatDate(isoStr) {

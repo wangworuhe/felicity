@@ -6,7 +6,7 @@ const {
 } = require('../../services/diary.js');
 const { showLoading, hideLoading, showToast, showSuccess } = require('../../utils/toast.js');
 const { TOAST_MESSAGES, DIARY_PRESET_TAGS } = require('../../utils/constants.js');
-const { ensurePrivacyAuthorized } = require('../../utils/privacy.js');
+const { ensurePrivacyAuthorized, guardScope } = require('../../utils/privacy.js');
 const { uploadVoiceToCloud } = require('../../utils/cloud.js');
 
 Page({
@@ -291,29 +291,15 @@ Page({
     const privacyOk = await ensurePrivacyAuthorized('time.record');
     if (!privacyOk) return;
 
-    wx.getSetting({
-      success: (res) => {
-        if (res.authSetting['scope.record'] === false) {
-          wx.showModal({
-            title: '需要麦克风权限',
-            content: '请允许使用麦克风以启用录音功能',
-            showCancel: false,
-            confirmText: '去设置',
-            success: (modalRes) => {
-              if (modalRes.confirm) wx.openSetting();
-            }
-          });
-          return;
-        }
+    const scopeOk = await guardScope('scope.record', '请允许使用麦克风以启用录音功能');
+    if (!scopeOk) return;
 
-        this._initRecorderManager();
-        this.setData({ isRecording: true, recordingTime: 0 });
-        this._recordingTimer = setInterval(() => {
-          this.setData({ recordingTime: this.data.recordingTime + 1 });
-        }, 1000);
-        this._recorderManager.start({ duration: 60000, format: 'mp3' });
-      }
-    });
+    this._initRecorderManager();
+    this.setData({ isRecording: true, recordingTime: 0 });
+    this._recordingTimer = setInterval(() => {
+      this.setData({ recordingTime: this.data.recordingTime + 1 });
+    }, 1000);
+    this._recorderManager.start({ duration: 60000, format: 'mp3' });
   },
 
   _stopRecording() {
