@@ -80,9 +80,11 @@
           <view class="voice-item" wx:for="{{card.voiceUrls}}" wx:for-item="voice" wx:for-index="voiceIndex" wx:key="voiceIndex">
             <view class="voice-play-area" bindtap="onPlayVoice" data-index="{{cardIndex}}" data-voice-index="{{voiceIndex}}">
               <text class="voice-play-icon">{{playingVoiceKey === 'card-' + cardIndex + '-' + voiceIndex ? '⏸' : '▶'}}</text>
-              <text class="voice-text">语音 {{voiceIndex + 1}}</text>
+              <text class="voice-duration">{{card.voiceDurationTexts[voiceIndex] || '00:00'}}</text>
             </view>
-            <text class="voice-remove" bindtap="onRemoveVoice" data-index="{{cardIndex}}" data-voice-index="{{voiceIndex}}">×</text>
+            <!-- TODO: 语音转文字功能 — 点击展开显示语音识别转译文本，需接入微信同声传译插件或第三方语音识别 API -->
+            <text class="voice-transcript-btn">原文 ∨</text>
+            <text class="voice-remove" catchtap="onRemoveVoice" data-index="{{cardIndex}}" data-voice-index="{{voiceIndex}}">×</text>
           </view>
         </view>
 
@@ -93,10 +95,6 @@
           </view>
         </view>
 
-
-        <view class="location-group" wx:if="{{location}}">
-          <text class="location-text">已定位</text>
-        </view>
 
       </view>
     </view>
@@ -110,7 +108,6 @@
   <view class="records-section">
     <view class="section-header">
       <text class="section-title">历史记录</text>
-      <text class="section-subtitle">下拉查看更多</text>
     </view>
 
     <view class="empty" wx:if="{{records.length === 0 && !loadingRecords}}">
@@ -126,10 +123,7 @@
         <view class="card-header">
           <text class="card-time">{{item.created_at}}</text>
           <view class="card-header-right">
-            <text class="card-location" wx:if="{{item.location}}">
-              已定位
-            </text>
-            <view class="more-btn" catchtap="onRecordAction" data-index="{{index}}">
+<view class="more-btn" catchtap="onRecordAction" data-index="{{index}}">
               <text class="more-dots">···</text>
             </view>
           </view>
@@ -151,7 +145,9 @@
           <view class="record-voice-item" wx:for="{{item.voice_urls}}" wx:for-item="voiceUrl" wx:for-index="voiceIdx" wx:key="voiceIdx"
             bindtap="onPlayRecordVoice" data-record-index="{{index}}" data-voice-index="{{voiceIdx}}">
             <text class="voice-play-icon">{{playingVoiceKey === 'record-' + index + '-' + voiceIdx ? '⏸' : '▶'}}</text>
-            <text class="voice-text">语音 {{voiceIdx + 1}}</text>
+            <text class="voice-duration">{{item.voice_duration_texts[voiceIdx] || '00:00'}}</text>
+            <!-- TODO: 语音转文字 — 展开显示转译内容 -->
+            <text class="voice-transcript-btn">原文 ∨</text>
           </view>
         </view>
 
@@ -197,6 +193,11 @@
     </view>
   </view>
 
+  <!-- 返回顶部 -->
+  <view class="back-top" wx:if="{{showBackTop}}" bindtap="onBackTop">
+    <text class="back-top-icon">↑</text>
+  </view>
+
   <!-- 随机回顾悬浮按钮 -->
   <view class="random-fab" bindtap="openRandomModal">
     <text class="random-fab-text">随机回顾</text>
@@ -218,12 +219,19 @@
       <view class="modal-body" wx:elif="{{randomRecord}}">
         <view class="random-card">
           <view class="card-header">
-            <text class="card-badge">随机回忆</text>
             <text class="card-time">{{randomRecord.created_at}}</text>
           </view>
 
           <view class="card-content">
             <text class="content-text">{{randomRecord.content}}</text>
+          </view>
+
+          <view class="record-voice-list" wx:if="{{randomRecord.voice_urls.length}}">
+            <view class="record-voice-item" wx:for="{{randomRecord.voice_urls}}" wx:for-item="voiceUrl" wx:for-index="voiceIdx" wx:key="voiceIdx"
+              bindtap="onPlayRandomVoice" data-voice-index="{{voiceIdx}}">
+              <text class="voice-play-icon">{{playingVoiceKey === 'random-' + voiceIdx ? '⏸' : '▶'}}</text>
+              <text class="voice-duration">{{randomRecord.voice_duration_texts[voiceIdx] || '00:00'}}</text>
+            </view>
           </view>
 
           <view class="card-images" wx:if="{{randomRecord.image_urls.length}}">
@@ -238,10 +246,6 @@
             />
           </view>
 
-          <view class="card-location" wx:if="{{randomRecord.location}}">
-            <text class="location-label">位置</text>
-            <text class="location-text">已定位</text>
-          </view>
         </view>
       </view>
 

@@ -119,14 +119,13 @@
 .voice-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .voice-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
+  padding: 8px 12px;
   background: #f5f5f5;
   border-radius: 8px;
 }
@@ -139,13 +138,27 @@
 }
 
 .voice-play-icon {
-  font-size: 14px;
-  color: #FF8C00;
+  font-size: 13px;
+  color: #333;
 }
 
-.voice-text {
-  font-size: 14px;
+.voice-duration {
+  font-size: 13px;
   color: #666;
+}
+
+.voice-transcript-btn {
+  font-size: 12px;
+  color: #999;
+  margin-left: auto;
+  padding: 0 4px;
+}
+
+.voice-remove {
+  font-size: 14px;
+  color: #999;
+  margin-left: 8px;
+  padding: 0 2px;
 }
 
 .recording-tip {

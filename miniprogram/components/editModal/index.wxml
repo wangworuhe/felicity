@@ -41,9 +41,11 @@
         <view class="voice-item" wx:for="{{voiceUrls}}" wx:key="index">
           <view class="voice-play-area" catchtap="onPlayVoice" data-index="{{index}}">
             <text class="voice-play-icon">{{playingVoiceKey === 'edit-' + index ? '⏸' : '▶'}}</text>
-            <text class="voice-text">语音 {{index + 1}}</text>
+            <text class="voice-duration">{{voiceDurationTexts[index] || '00:00'}}</text>
           </view>
-          <text class="remove-btn" catchtap="onRemoveVoice" data-index="{{index}}">×</text>
+          <!-- TODO: 语音转文字 — 展开显示转译内容 -->
+          <text class="voice-transcript-btn">原文 ∨</text>
+          <text class="voice-remove" catchtap="onRemoveVoice" data-index="{{index}}">×</text>
         </view>
       </view>
     </view>

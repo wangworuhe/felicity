@@ -17,6 +17,8 @@ Component({
     editContent: '',
     imageUrls: [],
     voiceUrls: [],
+    voiceDurations: [],
+    voiceDurationTexts: [],
     saving: false,
     isRecording: false,
     recordingTime: 0,
@@ -33,7 +35,9 @@ Component({
       this.setData({
         editContent: record.content || '',
         imageUrls: record.image_urls || (record.image_url ? [record.image_url] : []),
-        voiceUrls: record.voice_urls || (record.voice_url ? [record.voice_url] : [])
+        voiceUrls: record.voice_urls || (record.voice_url ? [record.voice_url] : []),
+        voiceDurations: record.voice_durations || [],
+        voiceDurationTexts: (record.voice_durations || []).map(d => this._formatVoiceDuration(d))
       });
     },
     'visible': function(visible) {
@@ -121,7 +125,12 @@ Component({
         showLoading('上传中...');
         try {
           const fileId = await uploadVoiceToCloud(res.tempFilePath);
-          this.setData({ voiceUrls: this.data.voiceUrls.concat(fileId) });
+          const duration = res.duration || 0;
+          this.setData({
+            voiceUrls: this.data.voiceUrls.concat(fileId),
+            voiceDurations: this.data.voiceDurations.concat(duration),
+            voiceDurationTexts: this.data.voiceDurationTexts.concat(this._formatVoiceDuration(duration))
+          });
         } catch (error) {
           console.error('上传录音失败:', error);
           showToast('录音上传失败');
@@ -194,12 +203,21 @@ Component({
 
     onRemoveVoice(e) {
       const idx = Number(e.currentTarget.dataset.index);
-      const voiceUrls = this.data.voiceUrls.filter((_, i) => i !== idx);
-      this.setData({ voiceUrls });
+      wx.showModal({
+        title: '提示',
+        content: '确定删除这段语音吗？',
+        success: (res) => {
+          if (!res.confirm) return;
+          const voiceUrls = this.data.voiceUrls.filter((_, i) => i !== idx);
+          const voiceDurations = this.data.voiceDurations.filter((_, i) => i !== idx);
+          const voiceDurationTexts = this.data.voiceDurationTexts.filter((_, i) => i !== idx);
+          this.setData({ voiceUrls, voiceDurations, voiceDurationTexts });
+        }
+      });
     },
 
     async onSave() {
-      const { editContent, imageUrls, voiceUrls } = this.data;
+      const { editContent, imageUrls, voiceUrls, voiceDurations } = this.data;
       const record = this.properties.record;
       const recordType = this.properties.recordType;
 
@@ -226,6 +244,7 @@ Component({
             content: editContent,
             tag: record.tag,
             voice_urls: voiceUrls,
+            voice_durations: voiceDurations,
             date_key: record.date_key
           });
         } else {
@@ -234,6 +253,7 @@ Component({
             content: editContent,
             image_urls: imageUrls,
             voice_urls: voiceUrls,
+            voice_durations: voiceDurations,
             location: record.location,
             date_key: record.date_key,
             order: record.order
@@ -267,6 +287,13 @@ Component({
       }
       this.setData({ playingVoiceKey: '' });
       this.triggerEvent('close');
+    },
+
+    _formatVoiceDuration(ms) {
+      const totalSec = Math.round((ms || 0) / 1000);
+      const min = String(Math.floor(totalSec / 60)).padStart(2, '0');
+      const sec = String(totalSec % 60).padStart(2, '0');
+      return `${min}:${sec}`;
     },
 
     noop() {}

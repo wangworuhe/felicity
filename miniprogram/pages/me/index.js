@@ -122,9 +122,13 @@ Page({
     }
   },
 
+  _isDefaultNickName(name) {
+    return !name || name === '未设置昵称' || /^用户_\d{6}$/.test(name);
+  },
+
   onEditNickName() {
     const { userProfile } = this.data;
-    const currentName = userProfile.nickName === '未设置昵称' ? '' : userProfile.nickName;
+    const currentName = this._isDefaultNickName(userProfile.nickName) ? '' : userProfile.nickName;
     wx.showModal({
       title: '修改昵称',
       editable: true,

@@ -201,24 +201,6 @@
   border-radius: 8px;
 }
 
-.voice-preview {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  margin: 0;
-  background: #FFF9E6;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-}
-
-.voice-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .voice-icon {
   font-size: 20px;
 }
@@ -228,22 +210,7 @@
   color: #666;
 }
 
-.voice-remove {
-  width: 28px;
-  height: 28px;
-  background: #FF6B6B;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  transition: transform 0.2s;
-}
 
-.voice-remove:active {
-  transform: scale(0.9);
-}
 
 .image-preview {
   position: relative;
@@ -279,25 +246,6 @@
   transform: scale(0.9);
 }
 
-.location-group {
-  display: flex;
-  align-items: center;
-  margin: 0;
-  padding: 10px;
-  background: #FFF9E6;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-}
-
-.location-icon {
-  font-size: 14px;
-  margin-right: 6px;
-}
-
-.location-text {
-  font-size: 13px;
-  color: #666;
-}
 
 .submit-btn {
   width: 60px !important;
@@ -323,9 +271,8 @@
 }
 
 .submit-btn.active {
-  background: linear-gradient(135deg, #FFD93D 0%, #FFB84D 50%, #FF6B6B 100%);
+  background: #07c160;
   color: white;
-  box-shadow: 0 3px 10px rgba(255, 107, 107, 0.25);
 }
 
 .submit-btn:active {
@@ -409,13 +356,7 @@
   gap: 8px;
 }
 
-.card-location {
-  font-size: 12px;
-  color: #FF6B6B;
-  background: #FFF9E6;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
+
 
 .more-btn {
   width: 28px;
@@ -540,19 +481,40 @@
   color: #ccc;
 }
 
+.back-top {
+  position: fixed;
+  right: 20px;
+  bottom: 90px;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+.back-top-icon {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
 .random-fab {
   position: fixed;
   right: 20px;
   bottom: 30px;
-  height: 48px;
+  height: 44px;
   padding: 0 16px;
-  border-radius: 24px;
-  background: linear-gradient(135deg, #FFD93D 0%, #FF6B6B 100%);
-  color: white;
+  border-radius: 22px;
+  background: #FFFFFF;
+  color: #07c160;
+  border: 1px solid #07c160;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 20px rgba(255, 107, 107, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   z-index: 3;
 }
 
@@ -593,7 +555,7 @@
   width: 100%;
   max-width: 640px;
   background: #FFFFFF;
-  border-radius: 20px;
+  border-radius: 12px;
   padding: 20px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
@@ -630,30 +592,19 @@
 }
 
 .random-card {
-  background: #FFF9E6;
-  border-radius: 16px;
-  padding: 16px;
+  background: #FFFFFF;
+  border: 1px solid #07c160;
+  border-radius: 8px;
+  padding: 10px;
 }
 
-.card-badge {
-  font-size: 12px;
-  color: #FF6B6B;
-  background: white;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-weight: bold;
+.random-card .card-header {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.location-label {
-  font-size: 12px;
-  color: #FF6B6B;
-  margin-right: 6px;
-}
 
-.location-text {
-  font-size: 12px;
-  color: #666;
-}
 
 .modal-actions {
   display: flex;
@@ -673,14 +624,14 @@
 }
 
 .modal-btn.primary {
-  background: linear-gradient(135deg, #FFD93D 0%, #FF6B6B 100%);
+  background: #07c160;
   color: white;
 }
 
 .modal-btn.ghost {
-  background: #FFF9E6;
+  background: #FFFFFF;
   color: #333;
-  border: 1px solid #FFD93D;
+  border: 1px solid #07c160;
 }
 
 .cards {
@@ -755,17 +706,17 @@
 .voice-preview {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  gap: 6px;
+  padding: 8px 0;
 }
 
 .voice-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 8px 12px;
-  background: #FFF9E6;
-  border-radius: 10px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  position: relative;
 }
 
 .voice-play-area {
@@ -776,13 +727,28 @@
 }
 
 .voice-play-icon {
-  font-size: 14px;
-  color: #FF8C00;
+  font-size: 13px;
+  color: #333;
+}
+
+.voice-duration {
+  font-size: 13px;
+  color: #666;
+  font-variant-numeric: tabular-nums;
+}
+
+.voice-transcript-btn {
+  font-size: 12px;
+  color: #999;
+  margin-left: auto;
+  padding: 0 4px;
 }
 
 .voice-remove {
-  font-size: 18px;
-  color: #FF6B6B;
+  font-size: 14px;
+  color: #999;
+  margin-left: 8px;
+  padding: 0 2px;
 }
 
 .record-voice-list {
@@ -796,19 +762,24 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
-  background: #FFF9E6;
-  border-radius: 10px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
   width: fit-content;
 }
 
 .record-voice-item .voice-play-icon {
   font-size: 13px;
-  color: #FF8C00;
+  color: #333;
 }
 
-.record-voice-item .voice-text {
+.record-voice-item .voice-duration {
   font-size: 13px;
+  color: #666;
+}
+
+.record-voice-item .voice-transcript-btn {
+  font-size: 12px;
   color: #999;
 }
 

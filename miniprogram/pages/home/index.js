@@ -37,7 +37,8 @@ Page({
     showRandomModal: false,
     actionPopup: { visible: false, y: 0, right: 0, index: -1 },
     editModalVisible: false,
-    editModalRecord: null
+    editModalRecord: null,
+    showBackTop: false
   },
 
   onLoad() {
@@ -69,6 +70,17 @@ Page({
     if (this.data.hasMore && !this.data.loadingRecords) {
       this.loadMore();
     }
+  },
+
+  onPageScroll(e) {
+    const showBackTop = e.scrollTop > 260;
+    if (showBackTop !== this.data.showBackTop) {
+      this.setData({ showBackTop });
+    }
+  },
+
+  onBackTop() {
+    wx.pageScrollTo({ scrollTop: 0, duration: 200 });
   },
 
   setFormMinHeight() {
@@ -143,6 +155,8 @@ Page({
       content: '',
       imageUrls: [],
       voiceUrls: [],
+      voiceDurations: [],
+      voiceDurationTexts: [],
       cloudId: '',
       dirty: false
     };
@@ -166,6 +180,10 @@ Page({
       const voiceUrls = Array.isArray(record.voice_urls)
         ? record.voice_urls
         : (record.voice_url ? [record.voice_url] : []);
+      const voiceDurations = Array.isArray(record.voice_durations)
+        ? record.voice_durations
+        : [];
+      const voiceDurationTexts = voiceDurations.map(d => this._formatVoiceDuration(d));
 
       return {
         localId: `cloud-${record._id}`,
@@ -173,6 +191,8 @@ Page({
         content: record.content || '',
         imageUrls,
         voiceUrls,
+        voiceDurations,
+        voiceDurationTexts,
         cloudId: record._id,
         dirty: false
       };
@@ -363,9 +383,12 @@ Page({
       showLoading('上传中...');
       try {
         const fileId = await uploadVoiceToCloud(res.tempFilePath);
+        const duration = res.duration || 0;
         const target = this.data.cards[index];
         const voiceUrls = target.voiceUrls.concat(fileId);
-        this.updateCard(index, { voiceUrls });
+        const voiceDurations = (target.voiceDurations || []).concat(duration);
+        const voiceDurationTexts = (target.voiceDurationTexts || []).concat(this._formatVoiceDuration(duration));
+        this.updateCard(index, { voiceUrls, voiceDurations, voiceDurationTexts });
       } catch (error) {
         console.error('上传录音失败:', error);
         showToast('录音上传失败');
@@ -467,8 +490,17 @@ Page({
     const target = cards[index];
     if (!target) return;
 
-    const voiceUrls = target.voiceUrls.filter((_, idx) => idx !== voiceIndex);
-    this.updateCard(index, { voiceUrls });
+    wx.showModal({
+      title: '提示',
+      content: '确定删除这段语音吗？',
+      success: (res) => {
+        if (!res.confirm) return;
+        const voiceUrls = target.voiceUrls.filter((_, idx) => idx !== voiceIndex);
+        const voiceDurations = (target.voiceDurations || []).filter((_, idx) => idx !== voiceIndex);
+        const voiceDurationTexts = (target.voiceDurationTexts || []).filter((_, idx) => idx !== voiceIndex);
+        this.updateCard(index, { voiceUrls, voiceDurations, voiceDurationTexts });
+      }
+    });
   },
 
   async onSaveCard(e) {
@@ -491,6 +523,7 @@ Page({
         content: target.content,
         image_urls: target.imageUrls,
         voice_urls: target.voiceUrls,
+        voice_durations: target.voiceDurations || [],
         location,
         date_key: dateKey,
         order: target.order
@@ -527,6 +560,8 @@ Page({
           ...record,
           image_urls: Array.isArray(record.image_urls) ? record.image_urls : (record.image_url ? [record.image_url] : []),
           voice_urls: Array.isArray(record.voice_urls) ? record.voice_urls : [],
+          voice_durations: Array.isArray(record.voice_durations) ? record.voice_durations : [],
+          voice_duration_texts: (Array.isArray(record.voice_durations) ? record.voice_durations : []).map(d => this._formatVoiceDuration(d)),
           created_at: formatDate(record.created_at, { includeYear: true }),
           _needCollapse: false,
           _expanded: false
@@ -713,6 +748,9 @@ Page({
           randomRecord: {
             ...r,
             image_urls: Array.isArray(r.image_urls) ? r.image_urls : (r.image_url ? [r.image_url] : []),
+            voice_urls: Array.isArray(r.voice_urls) ? r.voice_urls : [],
+            voice_durations: Array.isArray(r.voice_durations) ? r.voice_durations : [],
+            voice_duration_texts: (Array.isArray(r.voice_durations) ? r.voice_durations : []).map(d => this._formatVoiceDuration(d)),
             created_at: formatDate(r.created_at)
           }
         });
@@ -726,6 +764,15 @@ Page({
     } finally {
       this.setData({ randomLoading: false });
     }
+  },
+
+  onPlayRandomVoice(e) {
+    const voiceIndex = Number(e.currentTarget.dataset.voiceIndex);
+    const key = `random-${voiceIndex}`;
+    const record = this.data.randomRecord;
+    if (!record) return;
+    const voiceUrls = record.voice_urls || [];
+    this._playVoice(key, voiceUrls[voiceIndex]);
   },
 
   onRefreshRandom() {
@@ -800,6 +847,13 @@ Page({
     wx.navigateTo({
       url: '/pages/random/index'
     });
+  },
+
+  _formatVoiceDuration(ms) {
+    const totalSec = Math.round((ms || 0) / 1000);
+    const min = String(Math.floor(totalSec / 60)).padStart(2, '0');
+    const sec = String(totalSec % 60).padStart(2, '0');
+    return `${min}:${sec}`;
   },
 
   onUnload() {

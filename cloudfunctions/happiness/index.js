@@ -55,6 +55,7 @@ function sanitizeData(data) {
     content: data.content || '',
     image_urls: Array.isArray(data.image_urls) ? data.image_urls : [],
     voice_urls: Array.isArray(data.voice_urls) ? data.voice_urls : [],
+    voice_durations: Array.isArray(data.voice_durations) ? data.voice_durations : [],
     location: data.location || null,
     date_key: data.date_key || '',
     order: typeof data.order === 'number' ? data.order : 1
@@ -66,6 +67,7 @@ function sanitizeDiaryData(data) {
     content: data.content || '',
     tag: data.tag || '日常',
     voice_urls: Array.isArray(data.voice_urls) ? data.voice_urls : [],
+    voice_durations: Array.isArray(data.voice_durations) ? data.voice_durations : [],
     date_key: data.date_key || ''
   };
 }
@@ -370,6 +372,11 @@ async function getUserProfile(openid) {
   }
 }
 
+function generateDefaultNickName() {
+  const suffix = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
+  return '用户_' + suffix;
+}
+
 async function upsertUserProfile(openid, data) {
   try {
     const now = new Date().toISOString();
@@ -404,6 +411,11 @@ async function upsertUserProfile(openid, data) {
           created_at: existResult.data[0].created_at || now
         }
       };
+    }
+
+    // 首次创建：昵称为空时生成默认昵称
+    if (!nickName) {
+      payload.nick_name = generateDefaultNickName();
     }
 
     const createData = {
