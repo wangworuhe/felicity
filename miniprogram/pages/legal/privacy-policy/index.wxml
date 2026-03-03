@@ -1,18 +1,14 @@
 <view class="legal-page">
   <view class="header">
-    <text class="title">{{legal.APP_NAME}}隐私政策</text>
-    <text class="meta">生效日期：{{legal.EFFECTIVE_DATE}}</text>
-    <text class="meta">更新日期：{{legal.UPDATED_DATE}}</text>
-    <text class="meta">版本：{{legal.VERSION}}</text>
+    <text class="title">{{guideTitle}}</text>
+  </view>
+
+  <view class="section">
+    <text class="line">{{intro}}</text>
   </view>
 
   <view class="section" wx:for="{{sections}}" wx:key="title">
     <text class="section-title">{{item.title}}</text>
-    <text class="line" wx:for="{{item.lines}}" wx:key="*this">{{index + 1}}）{{item}}</text>
-  </view>
-
-  <view class="footer">
-    <text>主体：{{legal.ENTITY_NAME}}</text>
-    <text>联系邮箱：{{legal.CONTACT_EMAIL}}</text>
+    <text class="line" wx:for="{{item.lines}}" wx:key="*this">{{item}}</text>
   </view>
 </view>

@@ -52,7 +52,7 @@
       <text class="arrow">></text>
     </view>
 <view class="menu-item" bindtap="onOpenPrivacyContract">
-      <text>隐私保护指引</text>
+      <text>用户隐私保护指引</text>
       <text class="arrow">></text>
     </view>
     <view class="menu-item" bindtap="onOpenPermissions">

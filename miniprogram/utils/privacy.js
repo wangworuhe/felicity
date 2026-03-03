@@ -16,7 +16,7 @@ const getStatusByScopeValue = (scopeValue) => {
 export const getStatusText = (status) => STATUS_TEXT_MAP[status] || STATUS_TEXT_MAP.system;
 
 /**
- * 敏感能力调用前的隐私保护指引校验
+ * 敏感能力调用前的用户隐私保护指引校验
  */
 export const ensurePrivacyAuthorized = (scene = '') => {
   return new Promise((resolve) => {

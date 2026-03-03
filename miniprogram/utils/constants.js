@@ -94,7 +94,7 @@ export const DIARY_PRESET_TAGS = ['日常', '书账', '美食', '新知'];
 // 协议与隐私配置
 // 上线前请将 CONTACT_EMAIL 替换为真实邮箱
 export const LEGAL_CONFIG = {
-  APP_NAME: '幸福时刻',
+  APP_NAME: '心晴手账',
   ENTITY_NAME: '幸福时刻小程序开发者',
   CONTACT_EMAIL: '741924922@qq.com',
   EFFECTIVE_DATE: '2026-02-28',
@@ -125,7 +125,7 @@ export const PERMISSION_ITEMS = [
 ];
 
 export const AUDIT_MESSAGES = {
-  PRIVACY_AUTH_REQUIRED: '请先同意隐私保护指引后继续使用',
+  PRIVACY_AUTH_REQUIRED: '请先同意用户隐私保护指引后继续使用',
   PERMISSION_DENIED: '权限被拒绝，可前往设置开启',
   DELETE_DATA_CONFIRM: '删除后无法恢复，请谨慎操作',
 };
