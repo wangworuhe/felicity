@@ -20,7 +20,7 @@
             auto-height
           />
           <view class="char-count">
-            <text>{{inputValue.length}}</text>
+            <text>{{_inputCharCount >= 0 ? _inputCharCount : inputValue.length}}</text>
           </view>
         </view>
         <view class="input-toolbar">

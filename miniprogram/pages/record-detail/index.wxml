@@ -14,6 +14,7 @@
         class="edit-textarea"
         value="{{editContent}}"
         bindinput="onEditInput"
+        bindblur="onEditBlur"
         auto-height
         maxlength="-1"
         focus="{{editing}}"

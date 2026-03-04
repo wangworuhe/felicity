@@ -34,7 +34,7 @@
               auto-height
             />
             <view class="char-count">
-              <text>{{card.content.length}}</text>
+              <text>{{focusedCardIndex === cardIndex && _inputCharCount >= 0 ? _inputCharCount : card.content.length}}</text>
             </view>
           </view>
 

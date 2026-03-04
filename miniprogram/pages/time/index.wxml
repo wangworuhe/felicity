@@ -16,6 +16,7 @@
         placeholder-class="placeholder"
         value="{{inputValue}}"
         bindinput="onInputChange"
+        bindblur="onInputBlur"
         maxlength="1000"
         show-confirm-bar="{{false}}"
         auto-height

@@ -236,7 +236,13 @@ Page({
   // === 输入与保存 ===
 
   onInputChange(e) {
-    this.setData({ inputValue: e.detail.value });
+    // 直接修改 data，不 setData value，避免 textarea 重渲染导致中文输入法光标跳动
+    this.data.inputValue = e.detail.value;
+  },
+
+  onInputBlur() {
+    // 失焦时将输入内容同步到 data 层
+    this.setData({ inputValue: this.data.inputValue });
   },
 
   async onSave() {
@@ -250,21 +256,27 @@ Page({
     this.setData({ saving: true });
 
     try {
-      const dateKey = this.data.selectedDate;
+      // 新记录始终使用当前系统日期，不受日历选中日期影响
+      const now = new Date();
+      const todayKey = this._formatDateStr(now.getFullYear(), now.getMonth() + 1, now.getDate());
 
       const data = {
         content,
         tag: this.data.selectedTag,
         voice_urls: this._pendingVoiceUrls || [],
-        date_key: dateKey
+        date_key: todayKey
       };
 
       const result = await createDiaryRecord(data);
       if (result.code === 0) {
         showSuccess(TOAST_MESSAGES.DIARY_SAVE_SUCCESS);
-        this.setData({ inputValue: '' });
+        this.setData({
+          inputValue: '',
+          selectedDate: todayKey,
+          displayDateTitle: this._getDateTitle(todayKey)
+        });
         this._pendingVoiceUrls = [];
-        await this.loadRecords(dateKey);
+        await this.loadRecords(todayKey);
         this.loadMarkedDates(this.data.currentYear, this.data.currentMonth);
       } else {
         showToast(result.message || TOAST_MESSAGES.DIARY_SAVE_FAILED);

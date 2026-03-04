@@ -11,6 +11,7 @@
         class="edit-textarea"
         value="{{editContent}}"
         bindinput="onEditInput"
+        bindblur="onEditBlur"
         placeholder="写点什么..."
         placeholder-class="edit-placeholder"
         maxlength="-1"

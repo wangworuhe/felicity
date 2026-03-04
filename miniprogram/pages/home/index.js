@@ -17,6 +17,7 @@ Page({
     dateKey: '',
     cards: [],
     focusedCardIndex: -1,
+    _inputCharCount: -1,
     maxImages: 3,
     maxVoices: 3,
     location: null,
@@ -303,7 +304,12 @@ Page({
 
   onCardContentInput(e) {
     const index = Number(e.currentTarget.dataset.index);
-    this.updateCard(index, { content: e.detail.value });
+    const value = e.detail.value;
+    // 直接修改 data，不 setData value，避免 textarea 重渲染导致中文输入法光标跳动
+    this.data.cards[index].content = value;
+    this.data.cards[index].dirty = true;
+    this.setData({ _inputCharCount: value.length });
+    this.scheduleDraftSave(this.data.cards);
   },
 
   onInputFocus(e) {
@@ -311,8 +317,15 @@ Page({
     this.setData({ focusedCardIndex: index });
   },
 
-  onInputBlur() {
-    this.setData({ focusedCardIndex: -1 });
+  onInputBlur(e) {
+    const index = Number(e.currentTarget.dataset.index);
+    const update = { focusedCardIndex: -1, _inputCharCount: -1 };
+    // 失焦时将输入内容同步到 data 层
+    if (this.data.cards[index]) {
+      update[`cards[${index}].content`] = this.data.cards[index].content;
+      update[`cards[${index}].dirty`] = this.data.cards[index].dirty;
+    }
+    this.setData(update);
   },
 
   async onChooseImage(e) {

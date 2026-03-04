@@ -7,6 +7,7 @@ Page({
   data: {
     inputValue: '',
     inputFocus: false,
+    _inputCharCount: -1,
     records: [],
     page: 1,
     limit: 10,
@@ -44,7 +45,9 @@ Page({
   },
 
   onInputChange(e) {
-    this.setData({ inputValue: e.detail.value });
+    // 直接修改 data，不 setData value，避免 textarea 重渲染导致中文输入法光标跳动
+    this.data.inputValue = e.detail.value;
+    this.setData({ _inputCharCount: e.detail.value.length });
   },
 
   onInputFocus() {
@@ -52,7 +55,8 @@ Page({
   },
 
   onInputBlur() {
-    this.setData({ inputFocus: false });
+    // 失焦时将输入内容同步到 data 层
+    this.setData({ inputFocus: false, inputValue: this.data.inputValue, _inputCharCount: -1 });
   },
 
   async onSave() {

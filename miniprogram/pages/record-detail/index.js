@@ -115,7 +115,13 @@ Page({
   },
 
   onEditInput(e) {
-    this.setData({ editContent: e.detail.value });
+    // 直接修改 data，不 setData value，避免 textarea 重渲染导致中文输入法光标跳动
+    this.data.editContent = e.detail.value;
+  },
+
+  onEditBlur() {
+    // 失焦时将输入内容同步到 data 层
+    this.setData({ editContent: this.data.editContent });
   },
 
   onCancelEdit() {
