@@ -1,19 +1,71 @@
 <view class="calendar">
-  <!-- 月份导航 -->
+  <!-- 顶部：月份标题 -->
   <view class="calendar-header">
-    <view class="nav-btn" bindtap="onPrevMonth">
-      <text class="nav-arrow">‹</text>
-    </view>
     <view class="month-title-wrap" bindtap="onMonthTitleTap">
-      <text class="month-title">{{displayYear}}年{{displayMonth}}月</text>
+      <text class="month-title">{{displayLabel}}</text>
+      <text class="month-title-arrow">▾</text>
     </view>
-    <view class="nav-btn" bindtap="onNextMonth">
-      <text class="nav-arrow">›</text>
-    </view>
-    <view class="today-btn" bindtap="onGoToday" wx:if="{{!isCurrentMonth}}">
+    <view class="today-btn" bindtap="onGoToday">
       <text class="today-btn-text">今</text>
     </view>
   </view>
+
+  <!-- 星期行 -->
+  <view class="weekday-row">
+    <view class="weekday-cell" wx:for="{{weekdays}}" wx:key="*this">
+      <text class="weekday-text">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 滚动日期区域 -->
+  <scroll-view
+    class="weeks-scroll"
+    scroll-y
+    enhanced
+    show-scrollbar="{{false}}"
+    bounces="{{false}}"
+    scroll-into-view="{{scrollIntoView}}"
+    scroll-with-animation="{{false}}"
+    bindscroll="onScroll"
+    bindscrolltoupper="onScrollToUpper"
+    upper-threshold="100"
+    style="height: {{scrollHeight}}px;"
+  >
+    <block wx:for="{{months}}" wx:key="key" wx:for-item="monthBlock">
+      <!-- 月份分隔标记 -->
+      <view
+        class="month-separator"
+        id="{{monthBlock.key}}"
+        data-year="{{monthBlock.year}}"
+        data-month="{{monthBlock.month}}"
+      >
+        <text class="month-separator-text">{{monthBlock.label}}</text>
+      </view>
+
+      <!-- 周行 -->
+      <view
+        class="week-row"
+        wx:for="{{monthBlock.weeks}}"
+        wx:key="weekId"
+        wx:for-item="week"
+        id="{{week.weekId}}"
+      >
+        <view
+          class="day-cell"
+          wx:for="{{week.days}}"
+          wx:key="date"
+          wx:for-item="dayItem"
+          bindtap="onDayTap"
+          data-day="{{dayItem}}"
+        >
+          <view class="day-inner {{dayItem.isSelected ? 'selected' : ''}} {{dayItem.isToday ? 'today' : ''}} {{!dayItem.isCurrentMonth ? 'other-month' : ''}} {{dayItem.isFuture ? 'future' : ''}}">
+            <text class="day-text">{{dayItem.day}}</text>
+            <view class="dot" wx:if="{{dayItem.hasRecord && dayItem.isCurrentMonth}}"></view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </scroll-view>
 
   <!-- 年月选择器 -->
   <view class="picker-mask" wx:if="{{showPicker}}" catchtap="onClosePicker"></view>
@@ -31,32 +83,5 @@
         <view class="picker-item" wx:for="{{pickerMonths}}" wx:key="*this">{{item}}月</view>
       </picker-view-column>
     </picker-view>
-  </view>
-
-  <!-- 星期头 -->
-  <view class="weekday-row">
-    <view class="weekday-cell" wx:for="{{weekdays}}" wx:key="*this">
-      <text class="weekday-text">{{item}}</text>
-    </view>
-  </view>
-
-  <!-- 日期格子（支持滑动切月） -->
-  <view
-    class="days-grid"
-    bindtouchstart="onTouchStart"
-    bindtouchend="onTouchEnd"
-  >
-    <view
-      class="day-cell"
-      wx:for="{{days}}"
-      wx:key="date"
-      bindtap="onDayTap"
-      data-day="{{item}}"
-    >
-      <view class="day-inner {{item.isSelected ? 'selected' : ''}} {{item.isToday ? 'today' : ''}} {{!item.isCurrentMonth ? 'other-month' : ''}}">
-        <text class="day-text">{{item.day}}</text>
-        <view class="dot" wx:if="{{item.hasRecord && item.isCurrentMonth}}"></view>
-      </view>
-    </view>
   </view>
 </view>

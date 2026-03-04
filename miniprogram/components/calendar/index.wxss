@@ -3,32 +3,13 @@
   padding: 8px 0 4px;
 }
 
+/* 顶部导航 */
 .calendar-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
   margin-bottom: 6px;
   position: relative;
-}
-
-.nav-btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-}
-
-.nav-btn:active {
-  background: #f5f5f5;
-}
-
-.nav-arrow {
-  font-size: 20px;
-  color: #999;
-  line-height: 1;
 }
 
 .month-title-wrap {
@@ -72,6 +53,7 @@
   font-weight: 600;
 }
 
+/* 星期头 */
 .weekday-row {
   display: flex;
   margin-bottom: 2px;
@@ -88,11 +70,28 @@
   color: #bbb;
 }
 
-.days-grid {
-  display: flex;
-  flex-wrap: wrap;
+/* 滚动容器 */
+.weeks-scroll {
+  overflow: hidden;
 }
 
+/* 月份分隔标记 */
+.month-separator {
+  padding: 6px 12px 2px;
+}
+
+.month-separator-text {
+  font-size: 12px;
+  color: #bbb;
+  font-weight: 500;
+}
+
+/* 周行 */
+.week-row {
+  display: flex;
+}
+
+/* 日期格子 */
 .day-cell {
   width: 14.2857%;
   display: flex;
@@ -122,14 +121,17 @@
   line-height: 1;
 }
 
+/* 非当月日期 */
 .day-inner.other-month .day-text {
   color: #ddd;
 }
 
+/* 今天 */
 .day-inner.today .day-text {
   font-weight: 700;
 }
 
+/* 选中 */
 .day-inner.selected {
   background: #FF6B6B;
 }
@@ -143,6 +145,16 @@
   background: #FFFFFF;
 }
 
+/* 未来日期（不可点击） */
+.day-inner.future .day-text {
+  color: #e0e0e0;
+}
+
+.day-inner.future:active {
+  background: transparent;
+}
+
+/* 有记录的红点 */
 .dot {
   width: 4px;
   height: 4px;

@@ -1,15 +1,16 @@
+const { getDiaryRecordDates } = require('../../services/diary.js');
+
 Component({
   properties: {
-    selectedDate: { type: String, value: '' },
-    markedDates: { type: Array, value: [] }
+    selectedDate: { type: String, value: '' }
   },
 
   data: {
-    displayYear: 0,
-    displayMonth: 0,
+    months: [],
     weekdays: ['日', '一', '二', '三', '四', '五', '六'],
-    days: [],
-    isCurrentMonth: true,
+    displayLabel: '',
+    scrollIntoView: '',
+    scrollHeight: 220,
 
     // 年月选择器
     showPicker: false,
@@ -23,90 +24,133 @@ Component({
   lifetimes: {
     attached() {
       const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth() + 1;
-      // 生成年份列表（前5年 ~ 后5年）
+      this._todayYear = now.getFullYear();
+      this._todayMonth = now.getMonth() + 1;
+      this._todayStr = this._formatDateStr(this._todayYear, this._todayMonth, now.getDate());
+      this._markedSet = new Set();
+      this._lastScrollTime = 0;
+      this._monthOffsets = [];
+      this._loadingMore = false;
+
+      // 年份列表（过去5年到今年）
       const pickerYears = [];
-      for (let y = year - 5; y <= year + 5; y++) {
+      for (let y = this._todayYear - 5; y <= this._todayYear; y++) {
         pickerYears.push(y);
       }
+
+      // 先生成近3个月，快速渲染
+      const months = this._generateMonthRange(-2, 0);
+      this._oldestYear = months[0].year;
+      this._oldestMonth = months[0].month;
+      const todayWeekId = this._findWeekIdForDate(this._todayStr, months);
+
       this.setData({
-        displayYear: year,
-        displayMonth: month,
-        pickerYears
+        months,
+        pickerYears,
+        displayLabel: `${this._todayYear}年${this._todayMonth}月`,
+        scrollIntoView: todayWeekId
+      }, () => {
+        // 延迟补充更早的月份
+        setTimeout(() => {
+          const olderMonths = this._generateMonthRange(-12, -3);
+          if (!olderMonths.length) return;
+          const allMonths = [...olderMonths, ...this.data.months];
+          this._oldestYear = allMonths[0].year;
+          this._oldestMonth = allMonths[0].month;
+          const anchorId = this.data.months[0].weeks[0].weekId;
+          this.setData({ months: allMonths, scrollIntoView: anchorId }, () => {
+            this._calcMonthOffsets();
+            this._loadAllMarkedDates();
+          });
+        }, 300);
       });
-      this.generateDays();
     }
   },
 
   observers: {
-    'selectedDate, markedDates'() {
-      this.generateDays();
-    },
-    'displayYear, displayMonth'(year, month) {
-      const now = new Date();
-      this.setData({
-        isCurrentMonth: year === now.getFullYear() && month === now.getMonth() + 1
-      });
+    'selectedDate'(date) {
+      if (!date || !this.data.months.length) return;
+      this._updateSelectedInMonths(date);
     }
   },
 
   methods: {
-    generateDays() {
-      const { displayYear, displayMonth } = this.data;
-      if (!displayYear || !displayMonth) return;
+    // === 周行生成 ===
+
+    _generateMonthWeeks(year, month) {
+      const todayStr = this._todayStr;
       const selectedDate = this.properties.selectedDate;
-      const markedSet = new Set(this.properties.markedDates);
+      const markedSet = this._markedSet || new Set();
+      const isThisMonth = (year === this._todayYear && month === this._todayMonth);
 
-      const today = new Date();
-      const todayStr = this._formatDateStr(today.getFullYear(), today.getMonth() + 1, today.getDate());
+      const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
+      const start = new Date(year, month - 1, 1 - firstDayOfWeek);
+      const weeks = [];
+      const current = new Date(start);
 
-      const firstDay = new Date(displayYear, displayMonth - 1, 1).getDay();
-      const totalDays = new Date(displayYear, displayMonth, 0).getDate();
-      const prevMonthDays = new Date(displayYear, displayMonth - 1, 0).getDate();
+      while (true) {
+        const days = [];
+        let weekHasThisMonth = false;
 
-      const days = [];
+        for (let i = 0; i < 7; i++) {
+          const y = current.getFullYear();
+          const m = current.getMonth() + 1;
+          const d = current.getDate();
+          const dateStr = this._formatDateStr(y, m, d);
+          const belongsToMonth = (y === year && m === month);
 
-      // 填充上月尾部
-      for (let i = firstDay - 1; i >= 0; i--) {
-        const day = prevMonthDays - i;
-        const prevMonth = displayMonth === 1 ? 12 : displayMonth - 1;
-        const prevYear = displayMonth === 1 ? displayYear - 1 : displayYear;
-        const dateStr = this._formatDateStr(prevYear, prevMonth, day);
-        days.push({
-          day, date: dateStr, isCurrentMonth: false,
-          isToday: dateStr === todayStr,
-          isSelected: dateStr === selectedDate,
-          hasRecord: markedSet.has(dateStr)
-        });
+          if (belongsToMonth) weekHasThisMonth = true;
+
+          days.push({
+            day: d,
+            date: dateStr,
+            isCurrentMonth: belongsToMonth,
+            isToday: dateStr === todayStr,
+            isSelected: dateStr === selectedDate,
+            hasRecord: markedSet.has(dateStr),
+            isFuture: dateStr > todayStr
+          });
+          current.setDate(current.getDate() + 1);
+        }
+
+        if (!weekHasThisMonth) break;
+
+        weeks.push({ weekId: 'w-' + days[0].date, days });
+
+        // 当月只生成到包含今天的那一周
+        if (isThisMonth && days[6].date >= todayStr) break;
       }
 
-      // 当月日期
-      for (let d = 1; d <= totalDays; d++) {
-        const dateStr = this._formatDateStr(displayYear, displayMonth, d);
-        days.push({
-          day: d, date: dateStr, isCurrentMonth: true,
-          isToday: dateStr === todayStr,
-          isSelected: dateStr === selectedDate,
-          hasRecord: markedSet.has(dateStr)
-        });
-      }
+      return {
+        key: `m-${year}-${String(month).padStart(2, '0')}`,
+        label: `${month}月`,
+        year,
+        month,
+        weeks
+      };
+    },
 
-      // 填充下月头部（仅补满最后一行）
-      const remaining = (7 - days.length % 7) % 7;
-      for (let d = 1; d <= remaining; d++) {
-        const nextMonth = displayMonth === 12 ? 1 : displayMonth + 1;
-        const nextYear = displayMonth === 12 ? displayYear + 1 : displayYear;
-        const dateStr = this._formatDateStr(nextYear, nextMonth, d);
-        days.push({
-          day: d, date: dateStr, isCurrentMonth: false,
-          isToday: dateStr === todayStr,
-          isSelected: dateStr === selectedDate,
-          hasRecord: markedSet.has(dateStr)
-        });
+    _generateMonthRange(fromOffset, toOffset) {
+      const months = [];
+      for (let offset = fromOffset; offset <= toOffset; offset++) {
+        let y = this._todayYear;
+        let m = this._todayMonth + offset;
+        while (m < 1) { y--; m += 12; }
+        while (m > 12) { y++; m -= 12; }
+        months.push(this._generateMonthWeeks(y, m));
       }
+      return months;
+    },
 
-      this.setData({ days });
+    _findWeekIdForDate(dateStr, months) {
+      for (const month of months) {
+        for (const week of month.weeks) {
+          if (week.days.some(d => d.date === dateStr)) {
+            return week.weekId;
+          }
+        }
+      }
+      return '';
     },
 
     _formatDateStr(year, month, day) {
@@ -115,86 +159,192 @@ Component({
       return `${year}-${m}-${d}`;
     },
 
+    // === 选中/标记更新 ===
+
+    _updateSelectedInMonths(newDate) {
+      const updates = {};
+      this.data.months.forEach((month, mi) => {
+        month.weeks.forEach((week, wi) => {
+          week.days.forEach((day, di) => {
+            const shouldSelect = day.date === newDate;
+            if (day.isSelected !== shouldSelect) {
+              updates[`months[${mi}].weeks[${wi}].days[${di}].isSelected`] = shouldSelect;
+            }
+          });
+        });
+      });
+      if (Object.keys(updates).length > 0) {
+        this.setData(updates);
+      }
+    },
+
+    _applyMarkedDates() {
+      const updates = {};
+      this.data.months.forEach((month, mi) => {
+        month.weeks.forEach((week, wi) => {
+          week.days.forEach((day, di) => {
+            const shouldMark = this._markedSet.has(day.date);
+            if (day.hasRecord !== shouldMark) {
+              updates[`months[${mi}].weeks[${wi}].days[${di}].hasRecord`] = shouldMark;
+            }
+          });
+        });
+      });
+      if (Object.keys(updates).length > 0) {
+        this.setData(updates);
+      }
+    },
+
+    // === 标记日期加载 ===
+
+    _loadAllMarkedDates() {
+      const months = this.data.months;
+      if (!months.length) return;
+      const first = months[0];
+      const last = months[months.length - 1];
+      const startDate = this._formatDateStr(first.year, first.month, 1);
+      const lastDay = new Date(last.year, last.month, 0).getDate();
+      const endDate = this._formatDateStr(last.year, last.month, lastDay);
+
+      getDiaryRecordDates(startDate, endDate).then(result => {
+        if (result.code === 0) {
+          this._markedSet = new Set(result.data || []);
+          this._applyMarkedDates();
+        }
+      }).catch(() => {});
+    },
+
+    _loadMarkedDatesForRange(sy, sm, ey, em) {
+      const startDate = this._formatDateStr(sy, sm, 1);
+      const lastDay = new Date(ey, em, 0).getDate();
+      const endDate = this._formatDateStr(ey, em, lastDay);
+
+      getDiaryRecordDates(startDate, endDate).then(result => {
+        if (result.code === 0 && result.data) {
+          result.data.forEach(d => this._markedSet.add(d));
+          this._applyMarkedDates();
+        }
+      }).catch(() => {});
+    },
+
+    // 公开方法：父页面保存/删除记录后调用
+    refreshMarkedDates() {
+      this._loadAllMarkedDates();
+    },
+
     // === 日期点击 ===
 
     onDayTap(e) {
       const { day } = e.currentTarget.dataset;
-      if (!day || !day.isCurrentMonth) return;
+      if (!day || day.isFuture) return;
       this.triggerEvent('dateSelect', { date: day.date });
     },
 
-    // === 月份切换 ===
+    // === 滚动 ===
 
-    onPrevMonth() {
-      this._changeMonth(-1);
-    },
+    onScroll(e) {
+      const now = Date.now();
+      if (now - this._lastScrollTime < 100) return;
+      this._lastScrollTime = now;
 
-    onNextMonth() {
-      this._changeMonth(1);
-    },
+      const scrollTop = e.detail.scrollTop;
+      const offsets = this._monthOffsets;
+      if (!offsets || !offsets.length) return;
 
-    _changeMonth(delta) {
-      let { displayYear, displayMonth } = this.data;
-      displayMonth += delta;
-      if (displayMonth < 1) {
-        displayYear--;
-        displayMonth = 12;
-      } else if (displayMonth > 12) {
-        displayYear++;
-        displayMonth = 1;
+      let current = offsets[0];
+      for (let i = offsets.length - 1; i >= 0; i--) {
+        if (scrollTop >= offsets[i].top - 10) {
+          current = offsets[i];
+          break;
+        }
       }
-      this.setData({ displayYear, displayMonth }, () => {
-        this.generateDays();
-        this.triggerEvent('monthChange', { year: displayYear, month: displayMonth });
+
+      if (current) {
+        const label = `${current.year}年${current.month}月`;
+        if (label !== this.data.displayLabel) {
+          this.setData({ displayLabel: label });
+          this.triggerEvent('monthChange', { year: current.year, month: current.month });
+        }
+      }
+    },
+
+    onScrollToUpper() {
+      if (this._loadingMore) return;
+      this._loadingMore = true;
+
+      let y = this._oldestYear;
+      let m = this._oldestMonth;
+      const newMonths = [];
+
+      for (let i = 0; i < 3; i++) {
+        m--;
+        if (m < 1) { y--; m = 12; }
+        newMonths.unshift(this._generateMonthWeeks(y, m));
+      }
+
+      this._oldestYear = newMonths[0].year;
+      this._oldestMonth = newMonths[0].month;
+
+      const anchorId = this.data.months[0].weeks[0].weekId;
+      this.setData({
+        months: [...newMonths, ...this.data.months],
+        scrollIntoView: anchorId
+      }, () => {
+        this._loadingMore = false;
+        this._calcMonthOffsets();
+        const last = newMonths[newMonths.length - 1];
+        this._loadMarkedDatesForRange(newMonths[0].year, newMonths[0].month, last.year, last.month);
+      });
+    },
+
+    _calcMonthOffsets() {
+      const query = this.createSelectorQuery();
+      query.selectAll('.month-separator').boundingClientRect();
+      query.select('.weeks-scroll').boundingClientRect();
+      query.select('.weeks-scroll').scrollOffset();
+      query.exec(res => {
+        const rects = res[0] || [];
+        const scrollRect = res[1];
+        const scrollInfo = res[2] || { scrollTop: 0 };
+        if (!scrollRect) return;
+
+        this._monthOffsets = rects.map(r => ({
+          top: r.top - scrollRect.top + scrollInfo.scrollTop,
+          year: Number(r.dataset.year),
+          month: Number(r.dataset.month)
+        }));
       });
     },
 
     // === 回到今天 ===
 
     onGoToday() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth() + 1;
-      const day = now.getDate();
-      const todayStr = this._formatDateStr(year, month, day);
-
-      this.setData({ displayYear: year, displayMonth: month }, () => {
-        this.generateDays();
-        this.triggerEvent('monthChange', { year, month });
-        this.triggerEvent('dateSelect', { date: todayStr });
-      });
-    },
-
-    // === 滑动切月 ===
-
-    onTouchStart(e) {
-      this._touchStartX = e.touches[0].clientX;
-      this._touchStartY = e.touches[0].clientY;
-    },
-
-    onTouchEnd(e) {
-      const dx = e.changedTouches[0].clientX - this._touchStartX;
-      const dy = e.changedTouches[0].clientY - this._touchStartY;
-      // 水平滑动距离 > 50px 且水平位移大于垂直位移（避免误触）
-      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-        if (dx > 0) {
-          this._changeMonth(-1);
-        } else {
-          this._changeMonth(1);
-        }
+      const todayWeekId = this._findWeekIdForDate(this._todayStr, this.data.months);
+      if (todayWeekId) {
+        this.setData({ scrollIntoView: '' }, () => {
+          this.setData({
+            scrollIntoView: todayWeekId,
+            displayLabel: `${this._todayYear}年${this._todayMonth}月`
+          });
+        });
       }
+      this.triggerEvent('dateSelect', { date: this._todayStr });
     },
 
     // === 年月选择器 ===
 
     onMonthTitleTap() {
-      const { displayYear, displayMonth, pickerYears } = this.data;
-      const yearIndex = pickerYears.indexOf(displayYear);
+      const { displayLabel, pickerYears } = this.data;
+      const match = displayLabel.match(/(\d+)年(\d+)月/);
+      const curYear = match ? Number(match[1]) : this._todayYear;
+      const curMonth = match ? Number(match[2]) : this._todayMonth;
+      const yearIndex = pickerYears.indexOf(curYear);
+
       this.setData({
         showPicker: true,
-        pickerValue: [yearIndex >= 0 ? yearIndex : 5, displayMonth - 1],
-        _pickerYear: displayYear,
-        _pickerMonth: displayMonth
+        pickerValue: [yearIndex >= 0 ? yearIndex : pickerYears.length - 1, curMonth - 1],
+        _pickerYear: curYear,
+        _pickerMonth: curMonth
       });
     },
 
@@ -209,14 +359,61 @@ Component({
     onPickerConfirm() {
       const year = this.data._pickerYear;
       const month = this.data._pickerMonth;
-      this.setData({ displayYear: year, displayMonth: month, showPicker: false }, () => {
-        this.generateDays();
-        this.triggerEvent('monthChange', { year, month });
+
+      // 不允许选择未来月份
+      if (year > this._todayYear || (year === this._todayYear && month > this._todayMonth)) {
+        this.setData({ showPicker: false });
+        return;
+      }
+
+      const targetKey = `m-${year}-${String(month).padStart(2, '0')}`;
+      const exists = this.data.months.some(m => m.key === targetKey);
+      if (!exists) {
+        this._expandToMonth(year, month);
+      }
+
+      this.setData({ showPicker: false, scrollIntoView: '' }, () => {
+        this.setData({
+          scrollIntoView: targetKey,
+          displayLabel: `${year}年${month}月`
+        });
       });
+    },
+
+    _expandToMonth(targetYear, targetMonth) {
+      const newMonths = [];
+      let y = this._oldestYear;
+      let m = this._oldestMonth;
+
+      while (y > targetYear || (y === targetYear && m > targetMonth)) {
+        m--;
+        if (m < 1) { y--; m = 12; }
+        newMonths.unshift(this._generateMonthWeeks(y, m));
+      }
+
+      if (newMonths.length > 0) {
+        this._oldestYear = newMonths[0].year;
+        this._oldestMonth = newMonths[0].month;
+        this.setData({ months: [...newMonths, ...this.data.months] }, () => {
+          this._calcMonthOffsets();
+          const last = newMonths[newMonths.length - 1];
+          this._loadMarkedDatesForRange(newMonths[0].year, newMonths[0].month, last.year, last.month);
+        });
+      }
     },
 
     onClosePicker() {
       this.setData({ showPicker: false });
+    },
+
+    // 公开方法：滚动到指定日期
+    scrollToDate(dateStr) {
+      const weekId = this._findWeekIdForDate(dateStr, this.data.months);
+      if (weekId) {
+        this.setData({ scrollIntoView: '' }, () => {
+          this.setData({ scrollIntoView: weekId });
+        });
+      }
     }
   }
 });

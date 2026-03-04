@@ -1,7 +1,6 @@
 const {
   createDiaryRecord,
   getDiaryRecordsByDateKey,
-  getDiaryRecordDates,
   deleteDiaryRecord
 } = require('../../services/diary.js');
 const { showLoading, hideLoading, showToast, showSuccess } = require('../../utils/toast.js');
@@ -13,7 +12,6 @@ Page({
   data: {
     // 日历
     selectedDate: '',
-    markedDates: [],
     currentYear: 0,
     currentMonth: 0,
 
@@ -61,7 +59,6 @@ Page({
     });
 
     this._loadTags();
-    this.loadMarkedDates(year, month);
     this.loadRecords(selectedDate);
   },
 
@@ -69,7 +66,7 @@ Page({
     if (this._needRefresh) {
       this._needRefresh = false;
       this.loadRecords(this.data.selectedDate);
-      this.loadMarkedDates(this.data.currentYear, this.data.currentMonth);
+      this.selectComponent('#calendar').refreshMarkedDates();
     }
   },
 
@@ -87,7 +84,6 @@ Page({
   onMonthChange(e) {
     const { year, month } = e.detail;
     this.setData({ currentYear: year, currentMonth: month });
-    this.loadMarkedDates(year, month);
   },
 
   // === 标签 ===
@@ -277,7 +273,7 @@ Page({
         });
         this._pendingVoiceUrls = [];
         await this.loadRecords(todayKey);
-        this.loadMarkedDates(this.data.currentYear, this.data.currentMonth);
+        this.selectComponent('#calendar').refreshMarkedDates();
       } else {
         showToast(result.message || TOAST_MESSAGES.DIARY_SAVE_FAILED);
       }
@@ -406,21 +402,6 @@ Page({
     }
   },
 
-  async loadMarkedDates(year, month) {
-    const startDate = this._formatDateStr(year, month, 1);
-    const lastDay = new Date(year, month, 0).getDate();
-    const endDate = this._formatDateStr(year, month, lastDay);
-
-    try {
-      const result = await getDiaryRecordDates(startDate, endDate);
-      if (result.code === 0) {
-        this.setData({ markedDates: result.data || [] });
-      }
-    } catch (error) {
-      console.error('加载日历标点失败:', error);
-    }
-  },
-
   // === 操作弹窗 ===
 
   onRecordAction(e) {
@@ -485,7 +466,7 @@ Page({
           if (result.code === 0) {
             showSuccess(TOAST_MESSAGES.DIARY_DELETE_SUCCESS);
             this.loadRecords(this.data.selectedDate);
-            this.loadMarkedDates(this.data.currentYear, this.data.currentMonth);
+            this.selectComponent('#calendar').refreshMarkedDates();
           } else {
             showToast(result.message || TOAST_MESSAGES.DIARY_DELETE_FAILED);
           }
@@ -506,7 +487,7 @@ Page({
   onEditSave() {
     this.setData({ editModalVisible: false });
     this.loadRecords(this.data.selectedDate);
-    this.loadMarkedDates(this.data.currentYear, this.data.currentMonth);
+    this.selectComponent('#calendar').refreshMarkedDates();
   },
 
   onEditClose() {
