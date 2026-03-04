@@ -3,7 +3,9 @@
     "allow": [
       "Bash(git add:*)",
       "WebFetch(domain:www.jianshu.com)",
-      "WebFetch(domain:www.mj.org.cn)"
+      "WebFetch(domain:www.mj.org.cn)",
+      "Bash(node -c miniprogram/pages/legal/privacy-policy/index.js)",
+      "Bash(node -c cloudfunctions/happiness/index.js)"
     ]
   }
 }
