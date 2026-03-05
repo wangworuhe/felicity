@@ -1,10 +1,28 @@
 <view class="container">
-  <!-- 日历组件 -->
-  <calendar
-    id="calendar"
-    selectedDate="{{selectedDate}}"
-    bind:dateSelect="onDateSelect"
-  />
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar">
+      <view class="nav-title" bindtap="toggleCalendar">
+        <text class="nav-title-text">{{displayDateTitle}}</text>
+        <text class="nav-arrow {{calendarOpen ? 'open' : ''}}">▾</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 导航栏占位 -->
+  <view style="height: {{navBarHeight}}px;"></view>
+
+  <!-- 日历面板（固定在导航栏下方，滚动时不动） -->
+  <view class="calendar-panel {{calendarOpen ? 'show' : ''}}" style="top: {{navBarHeight}}px;">
+    <calendar
+      id="calendar"
+      selected-date="{{selectedDate}}"
+      bind:dateSelect="onDateSelect"
+    />
+  </view>
+
+  <!-- 日历展开时的占位，精确高度由 JS 控制 -->
+  <view class="calendar-spacer" style="height: {{calendarHeight}}px;"></view>
 
   <!-- 快速输入区 -->
   <view class="input-section">

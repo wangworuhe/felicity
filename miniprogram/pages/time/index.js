@@ -10,7 +10,11 @@ const { uploadVoiceToCloud } = require('../../utils/cloud.js');
 
 Page({
   data: {
-    // 日历
+    // 导航栏
+    statusBarHeight: 0,
+    navBarHeight: 0,
+    calendarOpen: false,
+    calendarHeight: 0,
     selectedDate: '',
 
     // 输入
@@ -43,33 +47,66 @@ Page({
   },
 
   onLoad() {
+    // 获取状态栏高度，适配自定义导航栏
+    const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
+    const statusBarHeight = windowInfo.statusBarHeight || 20;
+    const navBarHeight = statusBarHeight + 44;
+
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
     const day = now.getDate();
-    const selectedDate = this._formatDateStr(year, month, day);
+    this._todayKey = this._formatDateStr(year, month, day);
+    this._currentDateKey = this._todayKey;
 
     this.setData({
-      selectedDate,
-      displayDateTitle: this._getDateTitle(selectedDate)
+      statusBarHeight,
+      navBarHeight,
+      selectedDate: this._todayKey,
+      displayDateTitle: this._getDateTitle(this._todayKey)
     });
 
     this._loadTags();
-    this.loadRecords(selectedDate);
+    this.loadRecords(this._todayKey);
   },
 
   onShow() {
     if (this._needRefresh) {
       this._needRefresh = false;
-      this.loadRecords(this.data.selectedDate);
-      this.selectComponent('#calendar').refreshMarkedDates();
+      this.loadRecords(this._currentDateKey);
     }
   },
 
-  // === 日历事件 ===
+  // === 日历 ===
+
+  toggleCalendar() {
+    if (this.data.calendarOpen) {
+      // 收起：先把 spacer 高度归零（触发平滑动画），再隐藏面板
+      this.setData({ calendarHeight: 0 });
+      setTimeout(() => {
+        this.setData({ calendarOpen: false });
+      }, 300);
+    } else {
+      // 展开：先显示面板，再测量高度设置精确占位
+      this.setData({ calendarOpen: true }, () => {
+        wx.nextTick(() => {
+          this.createSelectorQuery()
+            .select('.calendar-panel')
+            .boundingClientRect(rect => {
+              if (rect) {
+                this.setData({ calendarHeight: rect.height });
+              }
+            })
+            .exec();
+        });
+      });
+    }
+  },
 
   onDateSelect(e) {
-    const { date } = e.detail;
+    const date = e.detail.date;
+    if (!date) return;
+    this._currentDateKey = date;
     this.setData({
       selectedDate: date,
       displayDateTitle: this._getDateTitle(date)
@@ -263,8 +300,9 @@ Page({
           displayDateTitle: this._getDateTitle(todayKey)
         });
         this._pendingVoiceUrls = [];
+        this._currentDateKey = todayKey;
         await this.loadRecords(todayKey);
-        this.selectComponent('#calendar').refreshMarkedDates();
+        this._refreshCalendarMarks();
       } else {
         showToast(result.message || TOAST_MESSAGES.DIARY_SAVE_FAILED);
       }
@@ -456,8 +494,8 @@ Page({
           const result = await deleteDiaryRecord(record._id);
           if (result.code === 0) {
             showSuccess(TOAST_MESSAGES.DIARY_DELETE_SUCCESS);
-            this.loadRecords(this.data.selectedDate);
-            this.selectComponent('#calendar').refreshMarkedDates();
+            this.loadRecords(this._currentDateKey);
+            this._refreshCalendarMarks();
           } else {
             showToast(result.message || TOAST_MESSAGES.DIARY_DELETE_FAILED);
           }
@@ -477,8 +515,8 @@ Page({
 
   onEditSave() {
     this.setData({ editModalVisible: false });
-    this.loadRecords(this.data.selectedDate);
-    this.selectComponent('#calendar').refreshMarkedDates();
+    this.loadRecords(this._currentDateKey);
+    this._refreshCalendarMarks();
   },
 
   onEditClose() {
@@ -525,6 +563,11 @@ Page({
 
   _saveTags() {
     wx.setStorageSync('diary_tags', this.data.allTags);
+  },
+
+  _refreshCalendarMarks() {
+    const calendar = this.selectComponent('#calendar');
+    if (calendar) calendar.refreshMarkedDates();
   },
 
   onUnload() {

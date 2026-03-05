@@ -1,10 +1,10 @@
 {
-  "navigationBarTitleText": "手账",
+  "navigationStyle": "custom",
   "navigationBarBackgroundColor": "#FFFFFF",
   "navigationBarTextStyle": "black",
   "backgroundColor": "#FFFFFF",
   "usingComponents": {
-    "calendar": "/components/calendar/index",
-    "edit-modal": "/components/editModal/index"
+    "edit-modal": "/components/editModal/index",
+    "calendar": "/components/calendar/index"
   }
 }

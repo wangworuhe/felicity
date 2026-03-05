@@ -5,6 +5,78 @@
   box-sizing: border-box;
 }
 
+/* 自定义导航栏 */
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  z-index: 100;
+}
+
+.nav-bar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.nav-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 16px;
+}
+
+.nav-title:active {
+  background: #f5f5f5;
+}
+
+.nav-title-text {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1F3B6D;
+}
+
+.nav-arrow {
+  font-size: 12px;
+  color: #999;
+  transition: transform 0.3s ease;
+}
+
+.nav-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* 日历面板（固定定位，滚动时不动） */
+.calendar-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  background: #FFFFFF;
+  padding: 0 8px;
+  box-sizing: border-box;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.calendar-panel.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 日历占位（精确高度由 JS 设置） */
+.calendar-spacer {
+  height: 0;
+  transition: height 0.3s ease;
+  overflow: hidden;
+}
+
 /* 快速输入区 */
 .input-section {
   width: 100%;
