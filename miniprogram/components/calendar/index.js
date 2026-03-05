@@ -266,7 +266,6 @@ Component({
         const label = `${current.year}年${current.month}月`;
         if (label !== this.data.displayLabel) {
           this.setData({ displayLabel: label });
-          this.triggerEvent('monthChange', { year: current.year, month: current.month });
         }
       }
     },

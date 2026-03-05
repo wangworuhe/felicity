@@ -12,8 +12,6 @@ Page({
   data: {
     // 日历
     selectedDate: '',
-    currentYear: 0,
-    currentMonth: 0,
 
     // 输入
     inputValue: '',
@@ -53,8 +51,6 @@ Page({
 
     this.setData({
       selectedDate,
-      currentYear: year,
-      currentMonth: month,
       displayDateTitle: this._getDateTitle(selectedDate)
     });
 
@@ -79,11 +75,6 @@ Page({
       displayDateTitle: this._getDateTitle(date)
     });
     this.loadRecords(date);
-  },
-
-  onMonthChange(e) {
-    const { year, month } = e.detail;
-    this.setData({ currentYear: year, currentMonth: month });
   },
 
   // === 标签 ===

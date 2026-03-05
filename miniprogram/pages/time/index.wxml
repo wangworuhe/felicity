@@ -4,7 +4,6 @@
     id="calendar"
     selectedDate="{{selectedDate}}"
     bind:dateSelect="onDateSelect"
-    bind:monthChange="onMonthChange"
   />
 
   <!-- 快速输入区 -->
