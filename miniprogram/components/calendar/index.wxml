@@ -17,48 +17,39 @@
     </view>
   </view>
 
-  <!-- 滚动日期区域 -->
-  <scroll-view
-    class="weeks-scroll"
-    scroll-y
-    enhanced
-    show-scrollbar="{{false}}"
-    bounces="{{false}}"
-    scroll-into-view="{{scrollIntoView}}"
-    scroll-with-animation="{{false}}"
-    bindscroll="onScroll"
-    bindscrolltoupper="onScrollToUpper"
-    upper-threshold="100"
-    style="height: {{scrollHeight}}px;"
+  <!-- 左右滑动月份区域 -->
+  <swiper
+    class="month-swiper"
+    current="{{swiperCurrent}}"
+    circular
+    bindanimationfinish="onSwiperFinish"
+    style="height: {{swiperHeight}}px;"
   >
-    <block wx:for="{{months}}" wx:key="key" wx:for-item="monthBlock" wx:for-index="monthIdx">
-      <!-- 周行 -->
-      <view
-        class="week-row {{weekIdx === 0 ? 'month-anchor' : ''}}"
-        wx:for="{{monthBlock.weeks}}"
-        wx:key="weekId"
-        wx:for-item="week"
-        wx:for-index="weekIdx"
-        id="{{weekIdx === 0 ? monthBlock.key : week.weekId}}"
-        data-year="{{monthBlock.year}}"
-        data-month="{{monthBlock.month}}"
-      >
+    <swiper-item wx:for="{{months}}" wx:key="key" wx:for-item="monthBlock">
+      <view class="month-body">
         <view
-          class="day-cell"
-          wx:for="{{week.days}}"
-          wx:key="date"
-          wx:for-item="dayItem"
-          bindtap="onDayTap"
-          data-day="{{dayItem}}"
+          class="week-row"
+          wx:for="{{monthBlock.weeks}}"
+          wx:key="weekId"
+          wx:for-item="week"
         >
-          <view class="day-inner {{dayItem.isSelected ? 'selected' : ''}} {{dayItem.isToday ? 'today' : ''}} {{!dayItem.isCurrentMonth ? 'other-month' : ''}} {{dayItem.isFuture ? 'future' : ''}}">
-            <text class="day-text">{{dayItem.day}}</text>
-            <view class="dot" wx:if="{{dayItem.hasRecord && dayItem.isCurrentMonth}}"></view>
+          <view
+            class="day-cell"
+            wx:for="{{week.days}}"
+            wx:key="date"
+            wx:for-item="dayItem"
+            bindtap="onDayTap"
+            data-day="{{dayItem}}"
+          >
+            <view class="day-inner {{dayItem.isSelected ? 'selected' : ''}} {{dayItem.isToday ? 'today' : ''}} {{!dayItem.isCurrentMonth ? 'other-month' : ''}} {{dayItem.isFuture ? 'future' : ''}}">
+              <text class="day-text">{{dayItem.day}}</text>
+              <view class="dot" wx:if="{{dayItem.hasRecord && dayItem.isCurrentMonth}}"></view>
+            </view>
           </view>
         </view>
       </view>
-    </block>
-  </scroll-view>
+    </swiper-item>
+  </swiper>
 
   <!-- 年月选择器 -->
   <view class="picker-mask" wx:if="{{showPicker}}" catchtap="onClosePicker"></view>

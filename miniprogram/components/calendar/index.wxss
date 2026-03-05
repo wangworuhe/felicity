@@ -71,9 +71,13 @@
   color: #bbb;
 }
 
-/* 滚动容器 */
-.weeks-scroll {
+/* 左右滑动容器 */
+.month-swiper {
   overflow: hidden;
+}
+
+.month-body {
+  padding: 0;
 }
 
 /* 周行 */

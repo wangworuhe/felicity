@@ -9,8 +9,8 @@ Component({
     months: [],
     weekdays: ['日', '一', '二', '三', '四', '五', '六'],
     displayLabel: '',
-    scrollIntoView: '',
-    scrollHeight: 220,
+    swiperCurrent: 1,
+    swiperHeight: 228,
 
     // 年月选择器
     showPicker: false,
@@ -28,9 +28,9 @@ Component({
       this._todayMonth = now.getMonth() + 1;
       this._todayStr = this._formatDateStr(this._todayYear, this._todayMonth, now.getDate());
       this._markedSet = new Set();
-      this._lastScrollTime = 0;
-      this._monthOffsets = [];
-      this._loadingMore = false;
+      this._viewYear = this._todayYear;
+      this._viewMonth = this._todayMonth;
+      this._swiping = false;
 
       // 年份列表（过去5年到今年）
       const pickerYears = [];
@@ -38,20 +38,18 @@ Component({
         pickerYears.push(y);
       }
 
-      // 先生成近3个月，快速渲染
-      const months = this._generateMonthRange(-2, 0);
-      this._oldestYear = months[0].year;
-      this._oldestMonth = months[0].month;
-      const todayWeekId = this._findWeekIdForDate(this._todayStr, months);
+      const months = this._buildSwiperMonths(this._viewYear, this._viewMonth);
+      const swiperHeight = months[1].weeks.length * 38;
 
       this.setData({
         months,
         pickerYears,
-        displayLabel: `${this._todayYear}年${this._todayMonth}月`,
-        scrollIntoView: todayWeekId
+        swiperCurrent: 1,
+        swiperHeight,
+        displayLabel: `${this._viewYear}年${this._viewMonth}月`
       }, () => {
-        this._calcMonthOffsets();
         this._loadAllMarkedDates();
+        this.triggerEvent('heightChange');
       });
     }
   },
@@ -64,13 +62,12 @@ Component({
   },
 
   methods: {
-    // === 周行生成 ===
+    // === 月份数据生成 ===
 
     _generateMonthWeeks(year, month) {
       const todayStr = this._todayStr;
       const selectedDate = this.properties.selectedDate;
       const markedSet = this._markedSet || new Set();
-      const isThisMonth = (year === this._todayYear && month === this._todayMonth);
 
       const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
       const start = new Date(year, month - 1, 1 - firstDayOfWeek);
@@ -105,9 +102,6 @@ Component({
         if (!weekHasThisMonth) break;
 
         weeks.push({ weekId: 'w-' + days[0].date, days });
-
-        // 当月只生成到包含今天的那一周
-        if (isThisMonth && days[6].date >= todayStr) break;
       }
 
       return {
@@ -119,41 +113,17 @@ Component({
       };
     },
 
-    _generateMonthRange(fromOffset, toOffset) {
-      const months = [];
-      for (let offset = fromOffset; offset <= toOffset; offset++) {
-        let y = this._todayYear;
-        let m = this._todayMonth + offset;
-        while (m < 1) { y--; m += 12; }
-        while (m > 12) { y++; m -= 12; }
-        months.push(this._generateMonthWeeks(y, m));
-      }
-      return this._dedupBoundaryWeeks(months);
-    },
-
-    // 去除相邻月份之间的重复边界周（前一个月的尾周 = 后一个月的首周）
-    _dedupBoundaryWeeks(months) {
-      for (let i = 1; i < months.length; i++) {
-        if (!months[i].weeks.length || !months[i - 1].weeks.length) continue;
-        const prevLast = months[i - 1].weeks[months[i - 1].weeks.length - 1];
-        const currFirst = months[i].weeks[0];
-        if (prevLast.weekId === currFirst.weekId) {
-          months[i] = { ...months[i], weeks: months[i].weeks.slice(1) };
-        }
-      }
-      return months;
-    },
-
-    _findWeekIdForDate(dateStr, months) {
-      for (const month of months) {
-        for (let i = 0; i < month.weeks.length; i++) {
-          if (month.weeks[i].days.some(d => d.date === dateStr)) {
-            // 第一个周行的 DOM id 是 monthBlock.key，其余是 weekId
-            return i === 0 ? month.key : month.weeks[i].weekId;
-          }
-        }
-      }
-      return '';
+    // 构建 swiper 的 3 个月数据 [上月, 当月, 下月]
+    _buildSwiperMonths(year, month) {
+      let py = year, pm = month - 1;
+      if (pm < 1) { py--; pm = 12; }
+      let ny = year, nm = month + 1;
+      if (nm > 12) { ny++; nm = 1; }
+      return [
+        this._generateMonthWeeks(py, pm),
+        this._generateMonthWeeks(year, month),
+        this._generateMonthWeeks(ny, nm)
+      ];
     },
 
     _formatDateStr(year, month, day) {
@@ -243,94 +213,77 @@ Component({
       this.triggerEvent('dateSelect', { date: day.date });
     },
 
-    // === 滚动 ===
+    // === 左右滑动 ===
 
-    onScroll(e) {
-      const now = Date.now();
-      if (now - this._lastScrollTime < 100) return;
-      this._lastScrollTime = now;
+    onSwiperFinish(e) {
+      // 导航锁：上一次滑动的数据更新未完成时，跳过本次
+      if (this._swiping) return;
 
-      const scrollTop = e.detail.scrollTop;
-      const offsets = this._monthOffsets;
-      if (!offsets || !offsets.length) return;
+      const idx = e.detail.current;
+      const target = this.data.months[idx];
+      if (!target) return;
 
-      let current = offsets[0];
-      for (let i = offsets.length - 1; i >= 0; i--) {
-        if (scrollTop >= offsets[i].top - 10) {
-          current = offsets[i];
-          break;
-        }
+      // 目标月份与当前一致，无需处理
+      if (target.year === this._viewYear && target.month === this._viewMonth) return;
+
+      this._swiping = true;
+      this._viewYear = target.year;
+      this._viewMonth = target.month;
+
+      // 计算前后月份
+      let py = target.year, pm = target.month - 1;
+      if (pm < 1) { py--; pm = 12; }
+      let ny = target.year, nm = target.month + 1;
+      if (nm > 12) { ny++; nm = 1; }
+
+      // 只更新不在屏的 slot，不重置 swiperCurrent
+      const prevSlot = (idx + 2) % 3;
+      const nextSlot = (idx + 1) % 3;
+      const updates = {};
+
+      const prevData = this.data.months[prevSlot];
+      if (prevData.year !== py || prevData.month !== pm) {
+        updates[`months[${prevSlot}]`] = this._generateMonthWeeks(py, pm);
+      }
+      const nextData = this.data.months[nextSlot];
+      if (nextData.year !== ny || nextData.month !== nm) {
+        updates[`months[${nextSlot}]`] = this._generateMonthWeeks(ny, nm);
       }
 
-      if (current) {
-        const label = `${current.year}年${current.month}月`;
-        if (label !== this.data.displayLabel) {
-          this.setData({ displayLabel: label });
-        }
-      }
+      updates.swiperHeight = target.weeks.length * 38;
+      updates.displayLabel = `${target.year}年${target.month}月`;
+
+      this.setData(updates, () => {
+        this._swiping = false;
+        this.triggerEvent('heightChange');
+        this.triggerEvent('monthChange', { year: target.year, month: target.month });
+      });
+
+      this._loadMarkedDatesForRange(py, pm, ny, nm);
     },
 
-    onScrollToUpper() {
-      if (this._loadingMore) return;
-      this._loadingMore = true;
-
-      let y = this._oldestYear;
-      let m = this._oldestMonth;
-      const newMonths = [];
-
-      for (let i = 0; i < 3; i++) {
-        m--;
-        if (m < 1) { y--; m = 12; }
-        newMonths.unshift(this._generateMonthWeeks(y, m));
-      }
-
-      this._oldestYear = newMonths[0].year;
-      this._oldestMonth = newMonths[0].month;
-
-      const anchorId = this.data.months[0].key;
-      const merged = this._dedupBoundaryWeeks([...newMonths, ...this.data.months]);
+    // 跳转到指定月份（年月选择器、回到今天等非滑动场景）
+    _navigateToMonth(year, month) {
+      this._viewYear = year;
+      this._viewMonth = month;
+      const months = this._buildSwiperMonths(year, month);
+      const swiperHeight = months[1].weeks.length * 38;
       this.setData({
-        months: merged,
-        scrollIntoView: anchorId
+        months,
+        swiperCurrent: 1,
+        swiperHeight,
+        displayLabel: `${year}年${month}月`
       }, () => {
-        this._loadingMore = false;
-        this._calcMonthOffsets();
-        const last = newMonths[newMonths.length - 1];
-        this._loadMarkedDatesForRange(newMonths[0].year, newMonths[0].month, last.year, last.month);
+        this.triggerEvent('heightChange');
+        this.triggerEvent('monthChange', { year, month });
       });
-    },
-
-    _calcMonthOffsets() {
-      const query = this.createSelectorQuery();
-      query.selectAll('.month-anchor').boundingClientRect();
-      query.select('.weeks-scroll').boundingClientRect();
-      query.select('.weeks-scroll').scrollOffset();
-      query.exec(res => {
-        const rects = res[0] || [];
-        const scrollRect = res[1];
-        const scrollInfo = res[2] || { scrollTop: 0 };
-        if (!scrollRect) return;
-
-        this._monthOffsets = rects.map(r => ({
-          top: r.top - scrollRect.top + scrollInfo.scrollTop,
-          year: Number(r.dataset.year),
-          month: Number(r.dataset.month)
-        }));
-      });
+      this._loadMarkedDatesForRange(months[0].year, months[0].month, months[2].year, months[2].month);
     },
 
     // === 回到今天 ===
 
     onGoToday() {
-      const todayWeekId = this._findWeekIdForDate(this._todayStr, this.data.months);
-      if (todayWeekId) {
-        this.setData({ scrollIntoView: '' }, () => {
-          this.setData({
-            scrollIntoView: todayWeekId,
-            displayLabel: `${this._todayYear}年${this._todayMonth}月`
-          });
-        });
-      }
+      this._navigateToMonth(this._todayYear, this._todayMonth);
       this.triggerEvent('dateSelect', { date: this._todayStr });
     },
 
@@ -369,54 +322,22 @@ Component({
         return;
       }
 
-      const targetKey = `m-${year}-${String(month).padStart(2, '0')}`;
-      const exists = this.data.months.some(m => m.key === targetKey);
-      if (!exists) {
-        this._expandToMonth(year, month);
-      }
-
-      this.setData({ showPicker: false, scrollIntoView: '' }, () => {
-        this.setData({
-          scrollIntoView: targetKey,
-          displayLabel: `${year}年${month}月`
-        });
-      });
-    },
-
-    _expandToMonth(targetYear, targetMonth) {
-      const newMonths = [];
-      let y = this._oldestYear;
-      let m = this._oldestMonth;
-
-      while (y > targetYear || (y === targetYear && m > targetMonth)) {
-        m--;
-        if (m < 1) { y--; m = 12; }
-        newMonths.unshift(this._generateMonthWeeks(y, m));
-      }
-
-      if (newMonths.length > 0) {
-        this._oldestYear = newMonths[0].year;
-        this._oldestMonth = newMonths[0].month;
-        const merged = this._dedupBoundaryWeeks([...newMonths, ...this.data.months]);
-        this.setData({ months: merged }, () => {
-          this._calcMonthOffsets();
-          const last = newMonths[newMonths.length - 1];
-          this._loadMarkedDatesForRange(newMonths[0].year, newMonths[0].month, last.year, last.month);
-        });
-      }
+      this.setData({ showPicker: false });
+      this._navigateToMonth(year, month);
     },
 
     onClosePicker() {
       this.setData({ showPicker: false });
     },
 
-    // 公开方法：滚动到指定日期
+    // 公开方法：导航到指定日期所在月份
     scrollToDate(dateStr) {
-      const weekId = this._findWeekIdForDate(dateStr, this.data.months);
-      if (weekId) {
-        this.setData({ scrollIntoView: '' }, () => {
-          this.setData({ scrollIntoView: weekId });
-        });
+      if (!dateStr) return;
+      const parts = dateStr.split('-');
+      const year = Number(parts[0]);
+      const month = Number(parts[1]);
+      if (year && month) {
+        this._navigateToMonth(year, month);
       }
     }
   }

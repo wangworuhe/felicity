@@ -103,6 +103,20 @@ Page({
     }
   },
 
+  onCalendarHeightChange() {
+    if (!this.data.calendarOpen) return;
+    wx.nextTick(() => {
+      this.createSelectorQuery()
+        .select('.calendar-panel')
+        .boundingClientRect(rect => {
+          if (rect) {
+            this.setData({ calendarHeight: rect.height });
+          }
+        })
+        .exec();
+    });
+  },
+
   onDateSelect(e) {
     const date = e.detail.date;
     if (!date) return;

@@ -3,7 +3,7 @@
   <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
     <view class="nav-bar">
       <view class="nav-title" bindtap="toggleCalendar">
-        <text class="nav-title-text">{{displayDateTitle}}</text>
+        <text class="nav-title-text">手账日历</text>
         <text class="nav-arrow {{calendarOpen ? 'open' : ''}}">▾</text>
       </view>
     </view>
@@ -18,6 +18,7 @@
       id="calendar"
       selected-date="{{selectedDate}}"
       bind:dateSelect="onDateSelect"
+      bind:heightChange="onCalendarHeightChange"
     />
   </view>
 
