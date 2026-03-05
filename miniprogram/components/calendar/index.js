@@ -50,19 +50,8 @@ Component({
         displayLabel: `${this._todayYear}年${this._todayMonth}月`,
         scrollIntoView: todayWeekId
       }, () => {
-        // 延迟补充更早的月份
-        setTimeout(() => {
-          const olderMonths = this._generateMonthRange(-12, -3);
-          if (!olderMonths.length) return;
-          const allMonths = [...olderMonths, ...this.data.months];
-          this._oldestYear = allMonths[0].year;
-          this._oldestMonth = allMonths[0].month;
-          const anchorId = this.data.months[0].weeks[0].weekId;
-          this.setData({ months: allMonths, scrollIntoView: anchorId }, () => {
-            this._calcMonthOffsets();
-            this._loadAllMarkedDates();
-          });
-        }, 300);
+        this._calcMonthOffsets();
+        this._loadAllMarkedDates();
       });
     }
   },
@@ -139,14 +128,28 @@ Component({
         while (m > 12) { y++; m -= 12; }
         months.push(this._generateMonthWeeks(y, m));
       }
+      return this._dedupBoundaryWeeks(months);
+    },
+
+    // 去除相邻月份之间的重复边界周（前一个月的尾周 = 后一个月的首周）
+    _dedupBoundaryWeeks(months) {
+      for (let i = 1; i < months.length; i++) {
+        if (!months[i].weeks.length || !months[i - 1].weeks.length) continue;
+        const prevLast = months[i - 1].weeks[months[i - 1].weeks.length - 1];
+        const currFirst = months[i].weeks[0];
+        if (prevLast.weekId === currFirst.weekId) {
+          months[i] = { ...months[i], weeks: months[i].weeks.slice(1) };
+        }
+      }
       return months;
     },
 
     _findWeekIdForDate(dateStr, months) {
       for (const month of months) {
-        for (const week of month.weeks) {
-          if (week.days.some(d => d.date === dateStr)) {
-            return week.weekId;
+        for (let i = 0; i < month.weeks.length; i++) {
+          if (month.weeks[i].days.some(d => d.date === dateStr)) {
+            // 第一个周行的 DOM id 是 monthBlock.key，其余是 weekId
+            return i === 0 ? month.key : month.weeks[i].weekId;
           }
         }
       }
@@ -285,9 +288,10 @@ Component({
       this._oldestYear = newMonths[0].year;
       this._oldestMonth = newMonths[0].month;
 
-      const anchorId = this.data.months[0].weeks[0].weekId;
+      const anchorId = this.data.months[0].key;
+      const merged = this._dedupBoundaryWeeks([...newMonths, ...this.data.months]);
       this.setData({
-        months: [...newMonths, ...this.data.months],
+        months: merged,
         scrollIntoView: anchorId
       }, () => {
         this._loadingMore = false;
@@ -299,7 +303,7 @@ Component({
 
     _calcMonthOffsets() {
       const query = this.createSelectorQuery();
-      query.selectAll('.month-separator').boundingClientRect();
+      query.selectAll('.month-anchor').boundingClientRect();
       query.select('.weeks-scroll').boundingClientRect();
       query.select('.weeks-scroll').scrollOffset();
       query.exec(res => {
@@ -394,7 +398,8 @@ Component({
       if (newMonths.length > 0) {
         this._oldestYear = newMonths[0].year;
         this._oldestMonth = newMonths[0].month;
-        this.setData({ months: [...newMonths, ...this.data.months] }, () => {
+        const merged = this._dedupBoundaryWeeks([...newMonths, ...this.data.months]);
+        this.setData({ months: merged }, () => {
           this._calcMonthOffsets();
           const last = newMonths[newMonths.length - 1];
           this._loadMarkedDatesForRange(newMonths[0].year, newMonths[0].month, last.year, last.month);

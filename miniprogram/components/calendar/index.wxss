@@ -1,6 +1,7 @@
 .calendar {
   background: #FFFFFF;
   padding: 8px 0 4px;
+  margin: 0 -8px;
 }
 
 /* 顶部导航 */
@@ -75,17 +76,6 @@
   overflow: hidden;
 }
 
-/* 月份分隔标记 */
-.month-separator {
-  padding: 6px 12px 2px;
-}
-
-.month-separator-text {
-  font-size: 12px;
-  color: #bbb;
-  font-weight: 500;
-}
-
 /* 周行 */
 .week-row {
   display: flex;
@@ -101,8 +91,8 @@
 }
 
 .day-inner {
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 36px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -116,7 +106,7 @@
 }
 
 .day-text {
-  font-size: 14px;
+  font-size: 15px;
   color: #333;
   line-height: 1;
 }

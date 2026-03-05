@@ -63,7 +63,7 @@
 }
 
 .toggle-on {
-  background: #ff6b6b;
+  background: #34c759;
 }
 
 .toggle-dot {

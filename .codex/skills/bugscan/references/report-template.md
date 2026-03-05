@@ -97,6 +97,3 @@ deliverables_required:
   - "验收用例执行结果"
   - "潜在回归风险"
 
-non_goals:
-  - "不直接提供代码补丁"
-```

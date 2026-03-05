@@ -31,24 +31,17 @@
     upper-threshold="100"
     style="height: {{scrollHeight}}px;"
   >
-    <block wx:for="{{months}}" wx:key="key" wx:for-item="monthBlock">
-      <!-- 月份分隔标记 -->
-      <view
-        class="month-separator"
-        id="{{monthBlock.key}}"
-        data-year="{{monthBlock.year}}"
-        data-month="{{monthBlock.month}}"
-      >
-        <text class="month-separator-text">{{monthBlock.label}}</text>
-      </view>
-
+    <block wx:for="{{months}}" wx:key="key" wx:for-item="monthBlock" wx:for-index="monthIdx">
       <!-- 周行 -->
       <view
-        class="week-row"
+        class="week-row {{weekIdx === 0 ? 'month-anchor' : ''}}"
         wx:for="{{monthBlock.weeks}}"
         wx:key="weekId"
         wx:for-item="week"
-        id="{{week.weekId}}"
+        wx:for-index="weekIdx"
+        id="{{weekIdx === 0 ? monthBlock.key : week.weekId}}"
+        data-year="{{monthBlock.year}}"
+        data-month="{{monthBlock.month}}"
       >
         <view
           class="day-cell"
