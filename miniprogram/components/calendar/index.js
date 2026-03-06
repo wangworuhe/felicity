@@ -31,6 +31,8 @@ Component({
       this._viewYear = this._todayYear;
       this._viewMonth = this._todayMonth;
       this._swiping = false;
+      this._lastSwiperIdx = 1;
+      this._pendingEvent = null;
 
       // 年份列表（过去5年到今年）
       const pickerYears = [];
@@ -215,25 +217,36 @@ Component({
 
     // === 左右滑动 ===
 
-    onSwiperFinish(e) {
-      // 导航锁：上一次滑动的数据更新未完成时，跳过本次
-      if (this._swiping) return;
+    onSwiperChange(e) {
+      // 方案 A：数据更新未完成时缓存最后事件，不丢弃
+      if (this._swiping) {
+        this._pendingEvent = e;
+        return;
+      }
+      this._processSwiperFinish(e);
+    },
 
+    _processSwiperFinish(e) {
       const idx = e.detail.current;
-      const target = this.data.months[idx];
-      if (!target) return;
-
-      // 目标月份与当前一致，无需处理
-      if (target.year === this._viewYear && target.month === this._viewMonth) return;
+      const prev = this._lastSwiperIdx;
+      if (idx === prev) return;
 
       this._swiping = true;
-      this._viewYear = target.year;
-      this._viewMonth = target.month;
+      this._pendingEvent = null;
+      // 方案 B：基于方向推算目标月份，不依赖槽位数据
+      const dir = (idx - prev + 3) % 3 === 1 ? 1 : -1;
+      this._lastSwiperIdx = idx;
+
+      let y = this._viewYear, m = this._viewMonth + dir;
+      if (m > 12) { y++; m = 1; }
+      if (m < 1) { y--; m = 12; }
+      this._viewYear = y;
+      this._viewMonth = m;
 
       // 计算前后月份
-      let py = target.year, pm = target.month - 1;
+      let py = y, pm = m - 1;
       if (pm < 1) { py--; pm = 12; }
-      let ny = target.year, nm = target.month + 1;
+      let ny = y, nm = m + 1;
       if (nm > 12) { ny++; nm = 1; }
 
       // 只更新不在屏的 slot，不重置 swiperCurrent
@@ -250,13 +263,20 @@ Component({
         updates[`months[${nextSlot}]`] = this._generateMonthWeeks(ny, nm);
       }
 
-      updates.swiperHeight = target.weeks.length * 38;
-      updates.displayLabel = `${target.year}年${target.month}月`;
+      // 更新当前槽位数据（确保快速滑动后当前月数据正确）
+      updates[`months[${idx}]`] = this._generateMonthWeeks(y, m);
+      updates.swiperHeight = updates[`months[${idx}]`].weeks.length * 38;
+      updates.displayLabel = `${y}年${m}月`;
 
       this.setData(updates, () => {
         this._swiping = false;
         this.triggerEvent('heightChange');
-        this.triggerEvent('monthChange', { year: target.year, month: target.month });
+        this.triggerEvent('monthChange', { year: y, month: m });
+
+        // 方案 A：锁释放后处理缓存的事件
+        if (this._pendingEvent) {
+          this._processSwiperFinish(this._pendingEvent);
+        }
       });
 
       this._loadMarkedDatesForRange(py, pm, ny, nm);
@@ -266,6 +286,7 @@ Component({
     _navigateToMonth(year, month) {
       this._viewYear = year;
       this._viewMonth = month;
+      this._lastSwiperIdx = 1;
       const months = this._buildSwiperMonths(year, month);
       const swiperHeight = months[1].weeks.length * 38;
       this.setData({

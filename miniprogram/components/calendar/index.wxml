@@ -22,7 +22,7 @@
     class="month-swiper"
     current="{{swiperCurrent}}"
     circular
-    bindanimationfinish="onSwiperFinish"
+    bindchange="onSwiperChange"
     style="height: {{swiperHeight}}px;"
   >
     <swiper-item wx:for="{{months}}" wx:key="key" wx:for-item="monthBlock">
